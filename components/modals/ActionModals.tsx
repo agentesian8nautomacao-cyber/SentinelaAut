@@ -1,4 +1,3 @@
-﻿
 import React from 'react';
 import { X, Search, ChevronDown, AlertTriangle, ArrowRight, CheckCircle2, ChevronLeft, Plus, Check, Minus, Edit2, MessageCircle, Bell, Settings2, Clock, Save, Briefcase, User, Phone, Mail, Loader2, AlertCircle, Lock, Copy, Link2, Upload, FileText, Camera, Image as ImageIcon } from 'lucide-react';
 import { Resident, PackageItem, Staff } from '../../types';
@@ -18,14 +17,14 @@ export const NewReservationModal = ({
          <header className="flex justify-between items-center mb-10">
             <div>
                <h4 className="text-3xl font-black uppercase tracking-tight text-white">Nova Reserva</h4>
-               <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mt-1">Agendamento de EspaÃ§o</p>
+               <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mt-1">Agendamento de Espaço</p>
             </div>
             <button onClick={onClose} className="p-4 bg-white/5 rounded-3xl hover:bg-white/10 transition-colors border border-white/5"><X className="w-5 h-5"/></button>
          </header>
          
          <div className="space-y-6">
             <div className="space-y-2">
-               <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 ml-2">Ãrea Comum</label>
+               <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 ml-2">Área Comum</label>
                <div className="relative">
                   <select 
                     value={data.area}
@@ -35,7 +34,7 @@ export const NewReservationModal = ({
                     }}
                     className="w-full p-5 bg-white/5 rounded-2xl outline-none font-bold text-sm border-none focus:ring-1 focus:ring-white/30 appearance-none text-white transition-all shadow-inner"
                   >
-                     <option value="" className="bg-zinc-900 text-white">Selecione a Ã¡rea</option>
+                     <option value="" className="bg-zinc-900 text-white">Selecione a área</option>
                      {areasStatus.map((area: any) => (
                         <option key={area.id} value={area.name} className="bg-zinc-900 text-white">{area.name}</option>
                      ))}
@@ -109,7 +108,7 @@ export const NewReservationModal = ({
 
             <div className="grid grid-cols-2 gap-4">
                <div className="space-y-2">
-                  <label className={`text-[10px] font-bold uppercase tracking-widest ml-2 transition-colors ${hasConflict ? 'text-red-500' : 'text-zinc-500'}`}>InÃ­cio</label>
+                  <label className={`text-[10px] font-bold uppercase tracking-widest ml-2 transition-colors ${hasConflict ? 'text-red-500' : 'text-zinc-500'}`}>Início</label>
                   <input 
                     type="time"
                     value={data.startTime}
@@ -131,7 +130,7 @@ export const NewReservationModal = ({
             {hasConflict && (
                <div className="flex items-center gap-2 text-red-400 bg-red-500/10 p-3 rounded-xl animate-pulse">
                   <AlertTriangle className="w-4 h-4" />
-                  <span className="text-[10px] font-black uppercase tracking-wide">HorÃ¡rio IndisponÃ­vel (Conflito)</span>
+                  <span className="text-[10px] font-black uppercase tracking-wide">Horário Indisponível (Conflito)</span>
                </div>
             )}
 
@@ -140,7 +139,7 @@ export const NewReservationModal = ({
               disabled={!data.residentId || !data.date || hasConflict}
               className="w-full py-6 bg-white text-black rounded-[24px] font-black uppercase text-[11px] tracking-[0.2em] hover:bg-zinc-200 hover:scale-[1.02] active:scale-95 transition-all mt-6 shadow-xl disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-               {hasConflict ? 'Verifique o HorÃ¡rio' : 'Confirmar Agendamento'}
+               {hasConflict ? 'Verifique o Horário' : 'Confirmar Agendamento'}
             </button>
          </div>
       </div>
@@ -204,7 +203,7 @@ export const NewVisitorModal = ({
                 onClick={() => setStep(2)} disabled={!data.unit}
                 className="w-full py-6 bg-black text-white rounded-[32px] font-black uppercase text-[11px] tracking-widest shadow-2xl hover:scale-[1.02] active:scale-95 transition-all mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                PrÃ³ximo <ArrowRight className="w-4 h-4 inline ml-2" />
+                Próximo <ArrowRight className="w-4 h-4 inline ml-2" />
               </button>
            </div>
          )}
@@ -238,7 +237,7 @@ export const NewVisitorModal = ({
               </div>
               <div className="flex gap-4 mt-4">
                  <button onClick={() => setStep(1)} className="p-6 bg-zinc-50 rounded-[32px] hover:bg-zinc-100"><ChevronLeft className="w-6 h-6"/></button>
-                 <button onClick={() => setStep(3)} disabled={!data.name} className="flex-1 py-6 bg-black text-white rounded-[32px] font-black uppercase text-[11px] tracking-widest shadow-2xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50">PrÃ³ximo</button>
+                 <button onClick={() => setStep(3)} disabled={!data.name} className="flex-1 py-6 bg-black text-white rounded-[32px] font-black uppercase text-[11px] tracking-widest shadow-2xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50">Próximo</button>
               </div>
            </div>
          )}
@@ -286,7 +285,7 @@ export const NewVisitorModal = ({
               </div>
               <div className="grid grid-cols-2 gap-4">
                  <div>
-                    <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-2 mb-2 block">VeÃ­culo</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-2 mb-2 block">Veículo</label>
                     <input type="text" placeholder="Modelo/Cor" value={data.vehicle} onChange={e => setData({ ...data, vehicle: e.target.value })} className="w-full p-4 bg-zinc-50 rounded-[24px] font-bold text-sm outline-none border-transparent focus:border-black/5" />
                  </div>
                  <div>
@@ -307,8 +306,8 @@ export const NewVisitorModal = ({
 
 
 // --- MODAL NOVO PACOTE (WIZARD) ---
-const stepTitles = ['Quem recebe?', 'O que chegou?', 'NotificaÃ§Ã£o'] as const;
-const stepLabels = ['Passo 01: IdentificaÃ§Ã£o', 'Passo 02: Detalhamento', 'Passo 03: NotificaÃ§Ã£o'] as const;
+const stepTitles = ['Quem recebe?', 'O que chegou?', 'Notificação'] as const;
+const stepLabels = ['Passo 01: Identificação', 'Passo 02: Detalhamento', 'Passo 03: Notificação'] as const;
 
 export const NewPackageModal = ({
   isOpen, onClose, step, setStep, searchResident, setSearchResident, selectedResident, setSelectedResident,
@@ -334,7 +333,7 @@ export const NewPackageModal = ({
         className="relative w-full max-w-full sm:max-w-2xl max-h-[95vh] rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in duration-300 flex flex-col border border-(--border-color)"
         style={{ backgroundColor: 'var(--sidebar-bg)', color: 'var(--text-primary)' }}
       >
-        {/* Stepper + close â€” sempre visÃ­vel */}
+        {/* Stepper + close  —  sempre visível */}
         <header className="shrink-0 flex items-center justify-between gap-4 p-4 sm:p-5 border-b border-(--border-color)">
           <div className="flex items-center gap-2 sm:gap-4 min-w-0">
             {([1, 2, 3] as const).map((s) => (
@@ -380,7 +379,7 @@ export const NewPackageModal = ({
 
                 {(typeof onOpenCameraScan === 'function' || typeof onOpenGalleryPick === 'function') && (
                   <section className={cardBase}>
-                    <p className="text-[10px] font-semibold uppercase tracking-wider opacity-70 mb-2" style={{ color: 'var(--text-secondary)' }}>Registrar por cÃ¢mera ou foto</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider opacity-70 mb-2" style={{ color: 'var(--text-secondary)' }}>Registrar por câmera ou foto</p>
                     <div className="flex flex-wrap gap-2">
                       {typeof onOpenCameraScan === 'function' && (
                         <button
@@ -389,7 +388,7 @@ export const NewPackageModal = ({
                           className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-(--border-color) bg-(--glass-bg) hover:bg-(--border-color)/40 transition-all text-xs font-semibold uppercase tracking-wider focus:ring-2 focus:ring-(--text-primary)/20"
                           style={{ color: 'var(--text-primary)' }}
                         >
-                          <Camera className="w-4 h-4" /> CÃ¢mera
+                          <Camera className="w-4 h-4" /> Câmera
                         </button>
                       )}
                       {typeof onOpenGalleryPick === 'function' && (
@@ -404,14 +403,14 @@ export const NewPackageModal = ({
                       )}
                     </div>
                     {typeof onOpenCameraScan === 'function' && (
-                      <p className="text-[10px] font-medium opacity-60 mt-2" style={{ color: 'var(--text-secondary)' }}>No computador, use a webcam, ou faÃ§a o registro manual.</p>
+                      <p className="text-[10px] font-medium opacity-60 mt-2" style={{ color: 'var(--text-secondary)' }}>No computador, use a webcam, ou faça o registro manual.</p>
                     )}
                   </section>
                 )}
 
                 {pendingImage && (
                   <div className={cardBase + ' overflow-hidden'}>
-                    <p className="text-[10px] font-semibold uppercase tracking-wider opacity-70 mb-2" style={{ color: 'var(--text-secondary)' }}>Foto da encomenda â€” relate ao morador</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider opacity-70 mb-2" style={{ color: 'var(--text-secondary)' }}>Foto da encomenda  —  relate ao morador</p>
                     <img src={pendingImage} alt="Encomenda" className="w-full h-auto max-h-40 object-contain rounded-xl" />
                   </div>
                 )}
@@ -439,7 +438,7 @@ export const NewPackageModal = ({
                 {!selectedResident && residentsLoading && (
                   <section className={cardBase + ' flex flex-col items-center justify-center py-10 gap-3'}>
                     <Loader2 className="w-8 h-8 animate-spin opacity-60" style={{ color: 'var(--text-secondary)' }} />
-                    <p className="text-xs font-medium opacity-70" style={{ color: 'var(--text-secondary)' }}>Carregando moradoresâ€¦</p>
+                    <p className="text-xs font-medium opacity-70" style={{ color: 'var(--text-secondary)' }}>Carregando moradores⬦</p>
                   </section>
                 )}
 
@@ -504,7 +503,7 @@ export const NewPackageModal = ({
                 className="flex-1 py-3.5 sm:py-4 rounded-xl font-semibold text-sm uppercase tracking-wider flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed focus:ring-2 focus:ring-(--text-primary)/20 focus:border-(--text-primary)/50"
                 style={selectedResident && !packageSaving ? { backgroundColor: 'var(--text-primary)', color: 'var(--bg-color)' } : { backgroundColor: 'var(--glass-bg)', color: 'var(--text-secondary)', border: '1px solid var(--border-color)' }}
               >
-                PrÃ³ximo: InventÃ¡rio <ArrowRight className="w-4 h-4" />
+                Próximo: Inventário <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -561,7 +560,7 @@ export const NewPackageModal = ({
 
                 <section className={cardBase}>
                   <div className="flex justify-between items-center mb-3">
-                    <label className="text-xs font-semibold uppercase tracking-wider opacity-80" style={{ color: 'var(--text-secondary)' }}>InventÃ¡rio</label>
+                    <label className="text-xs font-semibold uppercase tracking-wider opacity-80" style={{ color: 'var(--text-secondary)' }}>Inventário</label>
                     <div className="flex items-center gap-1 rounded-lg border border-(--border-color) p-1">
                       <button onClick={() => { if (numItems > 1) handleRemoveItemRow(packageItems[packageItems.length - 1].id); }} className="p-2 rounded-md hover:bg-(--border-color)/50 transition-all disabled:opacity-40" disabled={numItems <= 1} style={{ color: 'var(--text-primary)' }}><Minus className="w-4 h-4" /></button>
                       <span className="w-8 text-center text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{numItems}</span>
@@ -578,7 +577,7 @@ export const NewPackageModal = ({
                           className={inputBase}
                         />
                         <textarea
-                          placeholder="ObservaÃ§Ãµes"
+                          placeholder="Observações"
                           value={item.description}
                           onChange={e => updateItem(item.id, 'description', e.target.value)}
                           className={inputBase + ' resize-none h-20'}
@@ -604,7 +603,7 @@ export const NewPackageModal = ({
                 className="flex-1 py-3.5 sm:py-4 rounded-xl font-semibold text-sm uppercase tracking-wider flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-(--text-primary)/20"
                 style={{ backgroundColor: 'var(--text-primary)', color: 'var(--bg-color)' }}
               >
-                PrÃ³ximo: NotificaÃ§Ã£o <ArrowRight className="w-4 h-4" />
+                Próximo: Notificação <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -634,7 +633,7 @@ export const NewPackageModal = ({
                       className="text-sm font-semibold uppercase tracking-wider opacity-80 hover:opacity-100 transition-opacity focus:ring-2 focus:ring-(--text-primary)/20 rounded-lg px-2 py-1 disabled:opacity-40 disabled:cursor-not-allowed"
                       style={{ color: 'var(--text-primary)' }}
                     >
-                      {packageSaving ? 'Salvandoâ€¦' : 'Salvar sem notificar'}
+                      {packageSaving ? 'Salvando⬦' : 'Salvar sem notificar'}
                     </button>
                   </div>
                 </div>
@@ -648,7 +647,7 @@ export const NewPackageModal = ({
                   <textarea
                     value={packageMessage}
                     onChange={e => setPackageMessage(e.target.value)}
-                    placeholder="Edite a mensagem de notificaÃ§Ã£o..."
+                    placeholder="Edite a mensagem de notificação..."
                     disabled={packageSaving}
                     className={inputBase + ' resize-none min-h-[180px] disabled:opacity-60 disabled:cursor-not-allowed'}
                   />
@@ -657,7 +656,7 @@ export const NewPackageModal = ({
                 <div className={cardBase + ' flex items-start gap-3'} style={{ backgroundColor: 'var(--glass-bg)', borderColor: 'var(--border-color)' }}>
                   <Bell className="w-5 h-5 opacity-50 shrink-0 mt-0.5" style={{ color: 'var(--text-secondary)' }} />
                   <p className="text-xs font-medium leading-relaxed opacity-80" style={{ color: 'var(--text-secondary)' }}>
-                    O registro serÃ¡ salvo permanentemente. O morador pode ser alertado por WhatsApp.
+                    O registro será salvo permanentemente. O morador pode ser alertado por WhatsApp.
                   </p>
                 </div>
               </div>
@@ -672,7 +671,7 @@ export const NewPackageModal = ({
                 {packageSaving ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin inline mr-2" />
-                    Salvandoâ€¦
+                    Salvando⬦
                   </>
                 ) : (
                   'Salvar'
@@ -686,8 +685,8 @@ export const NewPackageModal = ({
                 {packageSaving ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span className="hidden sm:inline">Salvandoâ€¦</span>
-                    <span className="sm:hidden">Salvandoâ€¦</span>
+                    <span className="hidden sm:inline">Salvando⬦</span>
+                    <span className="sm:hidden">Salvando⬦</span>
                   </>
                 ) : (
                   <>
@@ -705,9 +704,9 @@ export const NewPackageModal = ({
   );
 };
 
-// --- MODAL STAFF (FUNCIONÃRIOS) ---
+// --- MODAL STAFF (FUNCIONÁRIOS) ---
 export type StaffFormData = Partial<Staff> & { passwordPlain?: string; passwordConfirm?: string };
-// Modal para criar usuÃ¡rios administrativos (Porteiro/SÃ­ndico)
+// Modal para criar usuários administrativos (Porteiro/Síndico)
 export const AdminUserModal = ({ isOpen, onClose, data, setData, onSave, currentRole }: {
   isOpen: boolean,
   onClose: () => void,
@@ -719,9 +718,9 @@ export const AdminUserModal = ({ isOpen, onClose, data, setData, onSave, current
   if (!isOpen) return null;
 
   const currentRoleUpper = String(currentRole || '').toUpperCase();
-  const canCreateAdminUsers = ['SINDICO', 'SÃNDICO', 'ADMIN', 'ADMINISTRADOR'].includes(currentRoleUpper);
+  const canCreateAdminUsers = ['SINDICO', 'SÍNDICO', 'ADMIN', 'ADMINISTRADOR'].includes(currentRoleUpper);
 
-  // Apenas sÃ­ndico/admin pode criar outros usuÃ¡rios administrativos
+  // Apenas síndico/admin pode criar outros usuários administrativos
   if (!canCreateAdminUsers) {
     return null;
   }
@@ -734,8 +733,8 @@ export const AdminUserModal = ({ isOpen, onClose, data, setData, onSave, current
       <div className="relative w-full max-w-lg bg-white text-black rounded-[32px] sm:rounded-[48px] shadow-2xl p-4 sm:p-6 md:p-8 lg:p-10 animate-in duration-300">
         <header className="flex justify-between items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
           <div>
-            <h4 className="text-xl sm:text-2xl font-black uppercase tracking-tight">Novo UsuÃ¡rio Administrativo</h4>
-            <p className="text-[9px] sm:text-[10px] font-bold opacity-30 uppercase tracking-[0.2em]">CriaÃ§Ã£o de Administrador</p>
+            <h4 className="text-xl sm:text-2xl font-black uppercase tracking-tight">Novo Usuário Administrativo</h4>
+            <p className="text-[9px] sm:text-[10px] font-bold opacity-30 uppercase tracking-[0.2em]">Criação de Administrador</p>
           </div>
           <button onClick={onClose} className="p-2 sm:p-3 bg-zinc-100 rounded-xl sm:rounded-2xl hover:bg-zinc-200 transition-all shrink-0">
             <X className="w-4 h-4 sm:w-5 sm:h-5"/>
@@ -755,7 +754,7 @@ export const AdminUserModal = ({ isOpen, onClose, data, setData, onSave, current
           </div>
 
           <div>
-            <label className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest opacity-40 ml-2 mb-1 block">E-mail (ObrigatÃ³rio)</label>
+            <label className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest opacity-40 ml-2 mb-1 block">E-mail (Obrigatório)</label>
             <input
               type="email"
               value={data.email}
@@ -766,22 +765,22 @@ export const AdminUserModal = ({ isOpen, onClose, data, setData, onSave, current
           </div>
 
           <div>
-            <label className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest opacity-40 ml-2 mb-1 block">FunÃ§Ã£o</label>
+            <label className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest opacity-40 ml-2 mb-1 block">Função</label>
             <select
               value={data.role}
               onChange={e => setData({...data, role: e.target.value})}
               className="w-full p-3 sm:p-4 bg-zinc-50 rounded-xl sm:rounded-2xl font-bold text-xs sm:text-sm outline-none border focus:border-black/10"
             >
-              <option value="">Selecione a funÃ§Ã£o</option>
+              <option value="">Selecione a função</option>
               <option value="PORTEIRO">Porteiro</option>
-              <option value="SINDICO">SÃ­ndico</option>
+              <option value="SINDICO">Síndico</option>
               <option value="ADMINISTRADORA">Administradora</option>
               <option value="CABO_TURMA">Cabo de Turma</option>
             </select>
           </div>
 
           <div>
-            <label className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest opacity-40 ml-2 mb-1 block">Senha (MÃ­nimo 6 caracteres)</label>
+            <label className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest opacity-40 ml-2 mb-1 block">Senha (Mínimo 6 caracteres)</label>
             <input
               type="password"
               value={data.password}
@@ -801,7 +800,7 @@ export const AdminUserModal = ({ isOpen, onClose, data, setData, onSave, current
               placeholder="Confirme a senha"
             />
             {data.password && data.confirmPassword && data.password !== data.confirmPassword && (
-              <p className="text-red-500 text-xs mt-1">Senhas nÃ£o coincidem</p>
+              <p className="text-red-500 text-xs mt-1">Senhas não coincidem</p>
             )}
           </div>
 
@@ -810,7 +809,7 @@ export const AdminUserModal = ({ isOpen, onClose, data, setData, onSave, current
             disabled={!isValid}
             className="w-full py-3 sm:py-4 bg-black text-white rounded-xl sm:rounded-2xl font-black uppercase text-[9px] sm:text-[10px] shadow-xl mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Criar UsuÃ¡rio Administrativo
+            Criar Usuário Administrativo
           </button>
         </div>
       </div>
@@ -832,7 +831,7 @@ export const StaffFormModal = ({ isOpen, onClose, data, setData, onSave }: { isO
          <header className="flex justify-between items-center mb-6 sm:mb-10 shrink-0">
             <div>
                <h4 className="text-3xl font-black uppercase tracking-tight">{data.id ? 'Editar Cadastro' : 'Novo Colaborador'}</h4>
-               <p className="text-[10px] font-bold opacity-30 uppercase tracking-[0.2em]">GestÃ£o de Recursos Humanos</p>
+               <p className="text-[10px] font-bold opacity-30 uppercase tracking-[0.2em]">Gestão de Recursos Humanos</p>
             </div>
             <button onClick={onClose} className="p-3 bg-zinc-100 rounded-2xl hover:bg-zinc-200 transition-all"><X className="w-5 h-5"/></button>
          </header>
@@ -847,7 +846,7 @@ export const StaffFormModal = ({ isOpen, onClose, data, setData, onSave }: { isO
                     value={data.name || ''} 
                     onChange={e => setData({...data, name: e.target.value})} 
                     className="w-full pl-12 pr-4 py-4 bg-zinc-50 rounded-2xl font-bold text-sm outline-none border focus:border-black/10" 
-                    placeholder="Nome do FuncionÃ¡rio" 
+                    placeholder="Nome do Funcionário" 
                  />
                </div>
             </div>
@@ -866,8 +865,8 @@ export const StaffFormModal = ({ isOpen, onClose, data, setData, onSave }: { isO
                         <option value="Porteiro">Porteiro</option>
                         <option value="Zelador">Zelador</option>
                         <option value="Faxineira">Faxineira</option>
-                        <option value="SeguranÃ§a">SeguranÃ§a</option>
-                        <option value="ManutenÃ§Ã£o">ManutenÃ§Ã£o</option>
+                        <option value="Segurança">Segurança</option>
+                        <option value="Manutenção">Manutenção</option>
                         <option value="Jardineiro">Jardineiro</option>
                         <option value="Rondista">Rondista</option>
                         <option value="Cabo de Turma">Cabo de Turma</option>
@@ -883,7 +882,7 @@ export const StaffFormModal = ({ isOpen, onClose, data, setData, onSave }: { isO
                      className="w-full px-4 py-4 bg-zinc-50 rounded-2xl font-bold text-sm outline-none border focus:border-black/10 appearance-none"
                   >
                      <option value="Comercial">Comercial</option>
-                     <option value="ManhÃ£">ManhÃ£</option>
+                     <option value="Manhã">Manhã</option>
                      <option value="Tarde">Tarde</option>
                      <option value="Noite">Noite</option>
                      <option value="Madrugada">Madrugada</option>
@@ -896,11 +895,11 @@ export const StaffFormModal = ({ isOpen, onClose, data, setData, onSave }: { isO
             <div className="space-y-2">
                <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-2">Status Operacional</label>
                <div className="flex gap-2">
-                  {['Ativo', 'FÃ©rias', 'LicenÃ§a'].map(status => (
+                  {['Ativo', 'Férias', 'Licença'].map(status => (
                      <button 
                         key={status}
                         onClick={() => setData({...data, status: status as any})}
-                        className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${data.status === status ? (status === 'Ativo' ? 'bg-green-500 text-white border-green-500' : status === 'FÃ©rias' ? 'bg-amber-500 text-white border-amber-500' : 'bg-red-500 text-white border-red-500') : 'bg-zinc-50 border-transparent text-zinc-400 hover:bg-zinc-100'}`}
+                        className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${data.status === status ? (status === 'Ativo' ? 'bg-green-500 text-white border-green-500' : status === 'Férias' ? 'bg-amber-500 text-white border-amber-500' : 'bg-red-500 text-white border-red-500') : 'bg-zinc-50 border-transparent text-zinc-400 hover:bg-zinc-100'}`}
                      >
                         {status}
                      </button>
@@ -911,7 +910,7 @@ export const StaffFormModal = ({ isOpen, onClose, data, setData, onSave }: { isO
             {isPorteiro && (
               <div className="pt-4 border-t border-zinc-100 space-y-4">
                 <p className="text-[10px] font-black uppercase tracking-widest opacity-60 ml-2">
-                  {isNewStaff ? 'Porteiros acessam o sistema com login prÃ³prio â€” defina uma senha pessoal.' : 'Senha de acesso do porteiro (o sÃ­ndico pode ver e alterar). PadrÃ£o: 123456 atÃ© o primeiro acesso.'}
+                  {isNewStaff ? 'Porteiros acessam o sistema com login próprio  —  defina uma senha pessoal.' : 'Senha de acesso do porteiro (o síndico pode ver e alterar). Padrão: 123456 até o primeiro acesso.'}
                 </p>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-2">
@@ -924,7 +923,7 @@ export const StaffFormModal = ({ isOpen, onClose, data, setData, onSave }: { isO
                       value={data.passwordPlain || ''}
                       onChange={e => setData({ ...data, passwordPlain: e.target.value })}
                       className="w-full pl-12 pr-4 py-4 bg-zinc-50 rounded-2xl font-bold text-sm outline-none border focus:border-black/10"
-                      placeholder={isNewStaff ? 'MÃ­n. 6 caracteres' : '123456 ou a senha jÃ¡ definida'}
+                      placeholder={isNewStaff ? 'Mín. 6 caracteres' : '123456 ou a senha já definida'}
                       autoComplete={isNewStaff ? 'new-password' : 'off'}
                     />
                   </div>
@@ -944,10 +943,10 @@ export const StaffFormModal = ({ isOpen, onClose, data, setData, onSave }: { isO
                   </div>
                 </div>
                 {data.passwordConfirm && !passwordMatch && (
-                  <p className="text-xs text-red-600 font-medium ml-2">As senhas nÃ£o coincidem.</p>
+                  <p className="text-xs text-red-600 font-medium ml-2">As senhas não coincidem.</p>
                 )}
                 {data.passwordPlain && data.passwordPlain.length > 0 && data.passwordPlain.length < 6 && (
-                  <p className="text-xs text-amber-600 font-medium ml-2">A senha deve ter no mÃ­nimo 6 caracteres.</p>
+                  <p className="text-xs text-amber-600 font-medium ml-2">A senha deve ter no mínimo 6 caracteres.</p>
                 )}
               </div>
             )}
@@ -1017,7 +1016,7 @@ export const StaffInviteModal = ({
     e.preventDefault();
     const emailTrim = email.trim().toLowerCase();
     if (!emailTrim || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrim)) {
-      setError('Informe um e-mail vÃ¡lido.');
+      setError('Informe um e-mail válido.');
       return;
     }
     setError(null);
@@ -1050,17 +1049,17 @@ export const StaffInviteModal = ({
             const msg =
               serverError ||
               (res.status === 503
-                ? 'Envio de e-mail nÃ£o configurado no servidor (RESEND_API_KEY).'
+                ? 'Envio de e-mail não configurado no servidor (RESEND_API_KEY).'
                 : res.status === 404
-                  ? 'Rota de e-mail nÃ£o encontrada. FaÃ§a o deploy com a pasta api/ na Vercel.'
-                  : 'E-mail nÃ£o enviado. Copie o link abaixo e envie ao convidado.');
+                  ? 'Rota de e-mail não encontrada. Faça o deploy com a pasta api/ na Vercel.'
+                  : 'E-mail não enviado. Copie o link abaixo e envie ao convidado.');
             toast.error(msg);
           }
         })
         .catch(() => {
           setEmailSent(false);
-          setEmailSendError('NÃ£o foi possÃ­vel contactar o servidor. Verifique a conexÃ£o ou, em desenvolvimento, configure VITE_API_BASE_URL ou rode npm run dev:api.');
-          toast.error('Falha ao enviar e-mail. Verifique a conexÃ£o.');
+          setEmailSendError('Não foi possível contactar o servidor. Verifique a conexão ou, em desenvolvimento, configure VITE_API_BASE_URL ou rode npm run dev:api.');
+          toast.error('Falha ao enviar e-mail. Verifique a conexão.');
         });
     } else {
       setError(result.error || 'Erro ao gerar convite.');
@@ -1072,7 +1071,7 @@ export const StaffInviteModal = ({
     navigator.clipboard.writeText(inviteLink).then(() => {
       toast.success('Link copiado!');
     }).catch(() => {
-      toast.error('NÃ£o foi possÃ­vel copiar.');
+      toast.error('Não foi possível copiar.');
     });
   };
 
@@ -1084,7 +1083,7 @@ export const StaffInviteModal = ({
         <header className="flex justify-between items-center mb-6 shrink-0">
           <div>
             <h4 className="text-2xl font-black uppercase tracking-tight">Convidar por link</h4>
-            <p className="text-[10px] font-bold opacity-40 uppercase tracking-widest mt-1">Portaria ou ADM â€” link Ãºnico por e-mail</p>
+            <p className="text-[10px] font-bold opacity-40 uppercase tracking-widest mt-1">Portaria ou ADM  —  link único por e-mail</p>
           </div>
           <button onClick={handleClose} className="p-3 bg-zinc-100 rounded-2xl hover:bg-zinc-200 transition-all"><X className="w-5 h-5"/></button>
         </header>
@@ -1111,10 +1110,10 @@ export const StaffInviteModal = ({
                 onChange={e => setRole(e.target.value as StaffInviteRole)}
                 className="w-full px-4 py-4 bg-zinc-50 rounded-2xl font-bold text-sm outline-none border focus:border-black/10"
               >
-                <option value="PORTEIRO">Perfil A â€” Portaria</option>
-                <option value="SINDICO">Perfil B â€” ADM</option>
-                <option value="CABO_TURMA">Perfil C â€” Cabo de Turma</option>
-                <option value="RONDISTA">Perfil D â€” Rondista</option>
+                <option value="PORTEIRO">Perfil A  —  Portaria</option>
+                <option value="SINDICO">Perfil B  —  ADM</option>
+                <option value="CABO_TURMA">Perfil C  —  Cabo de Turma</option>
+                <option value="RONDISTA">Perfil D  —  Rondista</option>
               </select>
             </div>
             {error && <p className="text-sm text-red-600 font-medium">{error}</p>}
@@ -1130,11 +1129,11 @@ export const StaffInviteModal = ({
         ) : (
           <div className="space-y-4">
             {emailSent === true && (
-              <p className="text-sm font-medium text-green-600">E-mail enviado para <strong>{email}</strong>. O convidado receberÃ¡ o link por e-mail.</p>
+              <p className="text-sm font-medium text-green-600">E-mail enviado para <strong>{email}</strong>. O convidado receberá o link por e-mail.</p>
             )}
             {emailSent === false && (
               <div className="space-y-1">
-                <p className="text-xs text-amber-600">O link foi gerado, mas o e-mail nÃ£o pÃ´de ser enviado. Copie o link abaixo e envie por e-mail ou WhatsApp ao convidado.</p>
+                <p className="text-xs text-amber-600">O link foi gerado, mas o e-mail não pôde ser enviado. Copie o link abaixo e envie por e-mail ou WhatsApp ao convidado.</p>
                 {emailSendError && (
                   <p className="text-xs text-red-600 font-medium mt-1" title="Erro retornado pelo servidor">
                     Erro: {emailSendError}
@@ -1145,7 +1144,7 @@ export const StaffInviteModal = ({
             {emailSent === null && (
               <p className="text-xs text-zinc-500">Enviando e-mail...</p>
             )}
-            <p className="text-xs text-zinc-600">O convite expira em 7 dias. O convidado definirÃ¡ a senha ao acessar o link.</p>
+            <p className="text-xs text-zinc-600">O convite expira em 7 dias. O convidado definirá a senha ao acessar o link.</p>
             <div className="flex gap-2">
               <input
                 type="text"

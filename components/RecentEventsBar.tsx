@@ -12,9 +12,15 @@ interface RecentEventsBarProps {
     hasNewNotice: boolean;
   };
   onOpenQuickView: (cat: QuickViewCategory) => void;
+  /** Alinhado ao menu: permission `occurrences.view` */
+  showOccurrences?: boolean;
 }
 
-const RecentEventsBar: React.FC<RecentEventsBarProps> = ({ eventStates, onOpenQuickView }) => {
+const RecentEventsBar: React.FC<RecentEventsBarProps> = ({
+  eventStates,
+  onOpenQuickView,
+  showOccurrences = true
+}) => {
   return (
     <div 
       className="w-full flex items-center justify-between p-1 bg-white/5 dark:bg-black/30 backdrop-blur-xl border border-white/10 rounded-xl mb-3 animate-in slide-in-from-top-4 duration-700 overflow-hidden"
@@ -41,17 +47,18 @@ const RecentEventsBar: React.FC<RecentEventsBarProps> = ({ eventStates, onOpenQu
           <span className="hidden lg:block ml-2 text-[10px] font-black uppercase tracking-widest">Acessos</span>
         </button>
 
-        {/* Slot Ocorrências (Segurança) */}
-        <button 
-          onClick={() => onOpenQuickView('occurrences')}
-          className={`flex-1 flex items-center justify-center py-4 px-2 transition-all group relative border-r border-white/5 ${eventStates.hasOpenOccurrences ? 'text-red-500' : 'text-white/40 hover:text-white'}`}
-          title="Ver Ocorrências Abertas"
-        >
-          <div className="relative">
-            <AlertCircle className={`w-5 h-5 ${eventStates.hasOpenOccurrences ? 'animate-pulse' : ''}`} />
-          </div>
-          <span className="hidden lg:block ml-2 text-[10px] font-black uppercase tracking-widest">Segurança</span>
-        </button>
+        {showOccurrences && (
+          <button
+            onClick={() => onOpenQuickView('occurrences')}
+            className={`flex-1 flex items-center justify-center py-4 px-2 transition-all group relative border-r border-white/5 ${eventStates.hasOpenOccurrences ? 'text-red-500' : 'text-white/40 hover:text-white'}`}
+            title="Ver Ocorrências Abertas"
+          >
+            <div className="relative">
+              <AlertCircle className={`w-5 h-5 ${eventStates.hasOpenOccurrences ? 'animate-pulse' : ''}`} />
+            </div>
+            <span className="hidden lg:block ml-2 text-[10px] font-black uppercase tracking-widest">Segurança</span>
+          </button>
+        )}
 
         {/* Slot Reservas (Agenda) */}
         <button 

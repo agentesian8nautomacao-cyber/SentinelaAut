@@ -18,6 +18,7 @@ import {
 import RecentEventsBar from '../RecentEventsBar';
 import { QuickViewCategory, Package, Occurrence, VisitorLog } from '../../types';
 import { useAppConfig } from '../../contexts/AppConfigContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { useConnectivity } from '../../contexts/ConnectivityContext';
 import { formatUnit } from '../../utils/unitFormatter';
 import { BRANDING } from '../../config/branding';
@@ -98,7 +99,11 @@ const DashboardView: React.FC<DashboardViewProps> = ({
   onOpenSentinela
 }) => {
   const { config } = useAppConfig();
+  const { userPermissions, isAdminPrincipal } = useAuth();
   const { isOnline, isSyncing } = useConnectivity();
+  const hasPermission = (key: string) => isAdminPrincipal || userPermissions.includes(key);
+  const canViewOccurrences = hasPermission('occurrences.view');
+  const canCreateOccurrence = hasPermission('occurrences.create');
   const [coreEvents, setCoreEvents] = useState<DomainEvent[]>(() => [...getRecentDomainEvents()].reverse().slice(0, 12));
 
   useEffect(() => {
@@ -118,7 +123,9 @@ const DashboardView: React.FC<DashboardViewProps> = ({
   };
 
   const attentionItems =
-    counts.packagesPending + counts.occurrencesOpen + (eventStates.hasActiveVisitor ? counts.visitorsActive : 0);
+    counts.packagesPending +
+    (canViewOccurrences ? counts.occurrencesOpen : 0) +
+    (eventStates.hasActiveVisitor ? counts.visitorsActive : 0);
 
   return (
     <div className="space-y-5 md:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-10 relative max-w-[1600px] mx-auto">
@@ -164,12 +171,14 @@ const DashboardView: React.FC<DashboardViewProps> = ({
           accent={counts.packagesPending > 0}
           onClick={() => setQuickViewCategory('packages')}
         />
-        <KpiCard
-          label="Ocorrências abertas"
-          value={counts.occurrencesOpen}
-          accent={counts.occurrencesOpen > 0}
-          onClick={() => setQuickViewCategory('occurrences')}
-        />
+        {canViewOccurrences && (
+          <KpiCard
+            label="Ocorrências abertas"
+            value={counts.occurrencesOpen}
+            accent={counts.occurrencesOpen > 0}
+            onClick={() => setQuickViewCategory('occurrences')}
+          />
+        )}
         <KpiCard
           label="Visitantes ativos"
           value={counts.visitorsActive}
@@ -201,11 +210,13 @@ const DashboardView: React.FC<DashboardViewProps> = ({
             label="QR / Foto"
             onClick={() => (onOpenCameraScan ? onOpenCameraScan() : setIsNewPackageModalOpen())}
           />
-          <QuickAction
-            icon={ShieldAlert}
-            label="Nova ocorrência"
-            onClick={() => (onOpenOccurrenceModal ? onOpenOccurrenceModal() : setActiveTab('occurrences'))}
-          />
+          {canCreateOccurrence && (
+            <QuickAction
+              icon={ShieldAlert}
+              label="Nova ocorrência"
+              onClick={() => (onOpenOccurrenceModal ? onOpenOccurrenceModal() : setActiveTab('occurrences'))}
+            />
+          )}
           <QuickAction icon={Users} label="Visitantes" onClick={() => setActiveTab('visitors')} />
           <QuickAction
             icon={Calendar}
@@ -332,7 +343,10 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                     </div>
                   </section>
                 )}
-                {globalResults?.occurrences?.length > 0 && setOccurrenceSearch && setSelectedOccurrenceForDetail && (
+                {canViewOccurrences &&
+                  globalResults?.occurrences?.length > 0 &&
+                  setOccurrenceSearch &&
+                  setSelectedOccurrenceForDetail && (
                   <section>
                     <header className="flex items-center gap-2 mb-3 px-3">
                       <ShieldAlert className="w-3 h-3 opacity-30" />
@@ -407,7 +421,11 @@ const DashboardView: React.FC<DashboardViewProps> = ({
       </div>
 
       <div className="space-y-3 px-1">
-        <RecentEventsBar eventStates={eventStates} onOpenQuickView={(cat) => setQuickViewCategory(cat)} />
+        <RecentEventsBar
+          eventStates={eventStates}
+          onOpenQuickView={(cat) => setQuickViewCategory(cat)}
+          showOccurrences={canViewOccurrences}
+        />
 
         {/* CTA principal: encomendas */}
         <div
@@ -471,23 +489,24 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                 </div>
               </button>
             ))}
-            {openOccurrences.slice(0, 3).map((o) => (
-              <button
-                key={o.id}
-                type="button"
-                onClick={() => {
-                  setActiveTab('occurrences');
-                  setSelectedOccurrenceForDetail?.(o);
-                }}
-                className="w-full text-left p-3 rounded-2xl bg-red-500/10 hover:bg-red-500/15 border border-red-500/10 transition-all"
-              >
-                <div className="text-xs font-black uppercase tracking-tight truncate">{o.description}</div>
-                <div className="text-[10px] opacity-50 uppercase font-bold mt-0.5">
-                  {formatUnit(o.unit)} · {o.status}
-                </div>
-              </button>
-            ))}
-            {pendingPackages.length === 0 && openOccurrences.length === 0 && (
+            {canViewOccurrences &&
+              openOccurrences.slice(0, 3).map((o) => (
+                <button
+                  key={o.id}
+                  type="button"
+                  onClick={() => {
+                    setActiveTab('occurrences');
+                    setSelectedOccurrenceForDetail?.(o);
+                  }}
+                  className="w-full text-left p-3 rounded-2xl bg-red-500/10 hover:bg-red-500/15 border border-red-500/10 transition-all"
+                >
+                  <div className="text-xs font-black uppercase tracking-tight truncate">{o.description}</div>
+                  <div className="text-[10px] opacity-50 uppercase font-bold mt-0.5">
+                    {formatUnit(o.unit)} · {o.status}
+                  </div>
+                </button>
+              ))}
+            {pendingPackages.length === 0 && (!canViewOccurrences || openOccurrences.length === 0) && (
               <p className="text-xs opacity-30 font-bold uppercase tracking-widest py-8 text-center">
                 Nenhuma pendência imediata
               </p>
@@ -527,7 +546,14 @@ const DashboardView: React.FC<DashboardViewProps> = ({
       {/* Atalhos secundários — operação primeiro; cadastro/base depois */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 px-1">
         <NavCard title="Encomendas" subtitle="Pendentes e histórico" icon={PackageIcon} onClick={() => setActiveTab('packages')} />
-        <NavCard title="Ocorrências" subtitle="Abertas e recentes" icon={ShieldAlert} onClick={() => setActiveTab('occurrences')} />
+        {canViewOccurrences && (
+          <NavCard
+            title="Ocorrências"
+            subtitle="Abertas e recentes"
+            icon={ShieldAlert}
+            onClick={() => setActiveTab('occurrences')}
+          />
+        )}
         <NavCard title="Visitantes" subtitle="Controle de acesso" icon={Users} onClick={() => setActiveTab('visitors')} />
         <NavCard title="Reservas" subtitle="Agenda do dia" icon={Calendar} onClick={() => setActiveTab('reservations')} />
       </div>

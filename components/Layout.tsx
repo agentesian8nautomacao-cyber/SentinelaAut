@@ -375,7 +375,9 @@ const Layout: React.FC<LayoutProps> = ({
             </h2>
           </div>
           <div className="flex items-center gap-2 sm:gap-4 md:gap-6 shrink-0">
-             {(role === 'PORTEIRO' || role === 'SINDICO' || role === 'ADMIN' || role === 'ADMINISTRADOR' || role === 'ADMINISTRADORA' || role === 'CABO_TURMA') && notifications !== undefined && (
+             {(role === 'PORTEIRO' || role === 'SINDICO' || role === 'ADMIN' || role === 'ADMINISTRADOR' || role === 'ADMINISTRADORA' || role === 'CABO_TURMA') &&
+               notifications !== undefined &&
+               hasPermission('occurrences.view') && (
                <div className="flex items-center gap-2 relative" ref={notificationDropdownRef}>
                  <button 
                     onClick={() => setIsNotificationDropdownOpen(prev => !prev)}
