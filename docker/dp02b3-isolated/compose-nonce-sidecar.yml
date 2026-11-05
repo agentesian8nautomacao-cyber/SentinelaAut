@@ -1,0 +1,59 @@
+# D-P0-2B-4B-A3 — Nonce consume sidecar (clone isolated network only).
+
+# NOT for sentinelaaut-n8n-local. No host port publish.
+
+# Before up: copy nonce-sidecar.env.example → nonce-sidecar.env and set IDENTITY_REGISTRY (clone-only).
+
+
+
+services:
+
+  agent-nonce-sidecar-dp02b3:
+
+    build:
+
+      context: ../..
+
+      dockerfile: docker/dp02b3-isolated/Dockerfile.nonce-sidecar
+
+    image: sentinelaaut-agent-nonce-sidecar-dp02b3:local
+
+    container_name: sentinelaaut-agent-nonce-sidecar-dp02b3
+
+    restart: "no"
+
+    volumes:
+
+      - sentinelaaut-agent-nonces-clone-data:/data
+
+    env_file:
+
+      - path: nonce-sidecar.env
+
+        required: false
+
+    environment:
+
+      SENTINELA_NONCE_SIDECAR_PORT: "3098"
+
+      SENTINELA_NONCE_SIDECAR_HOST: "0.0.0.0"
+
+      SENTINELA_AGENT_GATEWAY_NONCE_SQLITE_PATH: /data/agent-nonces.sqlite
+
+    networks:
+
+      - sentinelaaut-n8n-dp02b3-isolated
+
+
+
+volumes:
+
+  sentinelaaut-agent-nonces-clone-data:
+
+
+
+networks:
+
+  sentinelaaut-n8n-dp02b3-isolated:
+
+    external: true

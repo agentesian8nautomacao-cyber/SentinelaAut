@@ -1,0 +1,2145 @@
+{
+  "id": "aut-2f-001",
+  "name": "SENTINELAAUT — AUT-2F-001 — Intent Router",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "aut-2f-001-manual",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        200,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sentinelaaut/aut-2f-001",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": true
+        }
+      },
+      "id": "aut-2f-001-webhook",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "webhookId": "aut-2f-001",
+      "position": [
+        400,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "formTitle": "Sentinela AUT — porta operacional",
+        "formDescription": "Mesmo contrato JSON do webhook. Informe intent e, se preciso, payload_json. Tenant no body é ignorado; a credencial/vault é a autoridade.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "intent",
+              "fieldType": "text",
+              "requiredField": true,
+              "placeholder": "IDENTIFY_RESIDENT"
+            },
+            {
+              "fieldLabel": "payload_json",
+              "fieldType": "textarea",
+              "requiredField": false,
+              "placeholder": "{\"phone\":\"5511999990001\"}"
+            }
+          ]
+        },
+        "options": {
+          "path": "sentinelaaut/aut-2f-001-form"
+        }
+      },
+      "id": "aut-2f-001-form",
+      "name": "Form Trigger",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "webhookId": "aut-2f-001-form",
+      "notes": "UI n8n isolada. Sem autenticação própria. Sem tenant como autoridade.",
+      "position": [
+        600,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * AUT-2F-001 INTENT_ROUTER FASE 3A.\n * Porta única: Manual / Webhook / Form → allowlist → Execute Workflow.\n * Webhook passa por Validate Agent Gateway (agent-v1). Manual/Form sem gateway. Sem endpoint arbitrário.\n */\nconst TENANT_KEYS = ['organization_id','organizationId','org_id','orgId','condominium_id','condominiumId','tenant_id','tenantId','_agentGatewayPassed'];\nfunction unwrapN8nInput(raw) {\n  const src = raw && typeof raw === 'object' ? raw : {};\n  if (src.body && typeof src.body === 'object' && !Array.isArray(src.body)) return Object.assign({}, src.body);\n  return Object.assign({}, src);\n}\nfunction present(v) {\n  if (v === undefined || v === null) return false;\n  if (typeof v === 'string') return v.trim().length > 0;\n  return true;\n}\nfunction mergeFormPayload(input) {\n  const raw = input.payload_json;\n  if (typeof raw === 'string' && raw.trim()) {\n    try {\n      const extra = JSON.parse(raw);\n      if (extra && typeof extra === 'object' && !Array.isArray(extra)) Object.assign(input, extra);\n    } catch (e) {\n      input._form_json_error = true;\n    }\n  }\n  delete input.payload_json;\n  return input;\n}\nconst ALLOW = {\"IDENTIFY_RESIDENT\":{\"aut\":\"AUT-001\",\"cls\":\"READ\",\"wfId\":\"aut-001\",\"name\":\"SENTINELAAUT — AUT-001 — Identify Resident\"},\"IDENTIFY_UNIT\":{\"aut\":\"AUT-002\",\"cls\":\"READ\",\"wfId\":\"aut-002\",\"name\":\"SENTINELAAUT — AUT-002 — Identify Unit\"},\"CREATE_PACKAGE\":{\"aut\":\"AUT-003\",\"cls\":\"WRITE\",\"wfId\":\"aut-003\",\"name\":\"SENTINELAAUT — AUT-003 — Create Package\"},\"PICKUP_PACKAGE\":{\"aut\":\"AUT-004\",\"cls\":\"SENSITIVE\",\"wfId\":\"aut-004\",\"name\":\"SENTINELAAUT — AUT-004 — Pickup Package\"},\"CREATE_OCCURRENCE\":{\"aut\":\"AUT-005\",\"cls\":\"WRITE\",\"wfId\":\"aut-005\",\"name\":\"SENTINELAAUT — AUT-005 — Create Occurrence\"},\"UPDATE_OCCURRENCE\":{\"aut\":\"AUT-006\",\"cls\":\"WRITE\",\"wfId\":\"aut-006\",\"name\":\"SENTINELAAUT — AUT-006 — Update Occurrence\"},\"CREATE_RESERVATION\":{\"aut\":\"AUT-007\",\"cls\":\"WRITE\",\"wfId\":\"aut-007\",\"name\":\"SENTINELAAUT — AUT-007 — Create Reservation\"},\"CANCEL_RESERVATION\":{\"aut\":\"AUT-008\",\"cls\":\"SENSITIVE\",\"wfId\":\"aut-008\",\"name\":\"SENTINELAAUT — AUT-008 — Cancel Reservation\"},\"GET_BOLETO\":{\"aut\":\"AUT-009\",\"cls\":\"READ\",\"wfId\":\"aut-009\",\"name\":\"SENTINELAAUT — AUT-009 — Get Boleto\"},\"LIST_EVENTS\":{\"aut\":\"AUT-010\",\"cls\":\"READ\",\"wfId\":\"aut-010\",\"name\":\"SENTINELAAUT — AUT-010 — List Events\"},\"REGISTER_PACKAGE\":{\"aut\":\"AUT-2A-001\",\"cls\":\"WRITE\",\"wfId\":\"aut-2a-001\",\"name\":\"SENTINELAAUT — AUT-2A-001 — Register Package\"},\"PICKUP_PACKAGE_HITL\":{\"aut\":\"AUT-2A-002\",\"cls\":\"SENSITIVE\",\"wfId\":\"aut-2a-002\",\"name\":\"SENTINELAAUT — AUT-2A-002 — Pickup Package HITL\"},\"REGISTER_OCCURRENCE\":{\"aut\":\"AUT-2B-001\",\"cls\":\"WRITE\",\"wfId\":\"aut-2b-001\",\"name\":\"SENTINELAAUT — AUT-2B-001 — Register Occurrence\"},\"REGISTER_OCCURRENCE_FROM_CONTEXT\":{\"aut\":\"AUT-2B-003\",\"cls\":\"WRITE\",\"wfId\":\"aut-2b-003\",\"name\":\"SENTINELAAUT — AUT-2B-003 — Register Occurrence From Context\"},\"CREATE_RESERVATION_FROM_CONTEXT\":{\"aut\":\"AUT-2C-002\",\"cls\":\"WRITE\",\"wfId\":\"aut-2c-002\",\"name\":\"SENTINELAAUT — AUT-2C-002 — Create Reservation From Context\"},\"CANCEL_RESERVATION_HITL\":{\"aut\":\"AUT-2C-003\",\"cls\":\"SENSITIVE\",\"wfId\":\"aut-2c-003\",\"name\":\"SENTINELAAUT — AUT-2C-003 — Cancel Reservation HITL\"},\"QUERY_BOLETO\":{\"aut\":\"AUT-2D-001\",\"cls\":\"READ\",\"wfId\":\"aut-2d-001\",\"name\":\"SENTINELAAUT — AUT-2D-001 — Query Boleto\"},\"QUERY_BOLETO_BY_RESIDENT_CONTEXT\":{\"aut\":\"AUT-2D-002\",\"cls\":\"READ\",\"wfId\":\"aut-2d-002\",\"name\":\"SENTINELAAUT — AUT-2D-002 — Query Boleto By Resident Context\"},\"QUERY_BOLETO_SAFE\":{\"aut\":\"AUT-2D-003\",\"cls\":\"READ\",\"wfId\":\"aut-2d-003\",\"name\":\"SENTINELAAUT — AUT-2D-003 — Query Boleto Safe\"},\"LIST_PACKAGES\":{\"aut\":\"AUT-3B-001\",\"cls\":\"READ\",\"wfId\":\"aut-3b-001\",\"name\":\"SENTINELAAUT — AUT-3B-001 — List Packages\"},\"LIST_OCCURRENCES\":{\"aut\":\"AUT-3B-002\",\"cls\":\"READ\",\"wfId\":\"aut-3b-002\",\"name\":\"SENTINELAAUT — AUT-3B-002 — List Occurrences\"},\"LIST_RESERVATIONS\":{\"aut\":\"AUT-3B-003\",\"cls\":\"READ\",\"wfId\":\"aut-3b-003\",\"name\":\"SENTINELAAUT — AUT-3B-003 — List Reservations\"},\"LIST_AREAS\":{\"aut\":\"AUT-3B-004\",\"cls\":\"READ\",\"wfId\":\"aut-3b-004\",\"name\":\"SENTINELAAUT — AUT-3B-004 — List Areas\"},\"CHECK_AVAILABILITY\":{\"aut\":\"AUT-3B-005\",\"cls\":\"READ\",\"wfId\":\"aut-3b-005\",\"name\":\"SENTINELAAUT — AUT-3B-005 — Check Availability\"},\"HITL_RESUME\":{\"aut\":\"AUT-2F-002\",\"cls\":\"SENSITIVE\",\"wfId\":\"aut-2f-002\",\"name\":\"SENTINELAAUT — AUT-2F-002 — HITL Resume\"}};\nconst input = mergeFormPayload(unwrapN8nInput($json));\nfor (const k of TENANT_KEYS) delete input[k];\nconst executionId = String(($execution && $execution.id) || input.execution_id || Date.now()).replace(/[^A-Za-z0-9_.:-]/g, '_').slice(0, 128);\nconst correlationId = executionId;\nconst requestId = String(input.request_id || ('req_' + correlationId)).replace(/[^A-Za-z0-9_.:-]/g, '_').slice(0, 128);\nconst clientId = String($env.SENTINELA_N8N_CLIENT_ID || $env.SENTINELA_HARNESS_CLIENT_ID || 'n8n-client');\nfunction reject(code, message) {\n  return [{ json: { skip_http: true, error_code: code, message, requestId, correlationId, intent: input.intent || null } }];\n}\nif (input._form_json_error) return reject('WORKFLOW_INVALID_INPUT', 'payload_json must be valid JSON object');\nif (present(input.path) || present(input.url) || present(input.endpoint) || present(input.method)) {\n  return reject('WORKFLOW_INVALID_INPUT', 'caller must not choose path/url/endpoint/method');\n}\nconst vendor = 'as' + 'aas';\nconst fin = Object.keys(input).some((k) => /^(payment_amount|pix_key|pix|gateway_id|gateway|charge|subscription|billing|checkout|estorno)$/i.test(k) || k.toLowerCase() === vendor || k.toLowerCase() === 'payment' + '_received');\nif (fin) return reject('WORKFLOW_UNSUPPORTED_INTENT', 'financeiro blocked');\nconst blockedAdmin = 'service' + '_role';\nif (String(input.intent || '').toUpperCase().indexOf('MASTER') >= 0 || ('platform_admin' in input) || ('is_platform_admin' in input) || ('master_api' in input) || (blockedAdmin in input)) {\n  return reject('WORKFLOW_UNSUPPORTED_INTENT', 'MASTER blocked');\n}\nconst originalIntent = String(input.intent || '').trim().toUpperCase();\nif (!originalIntent) return reject('WORKFLOW_INVALID_INPUT', 'intent is required');\nconst hasConfirm = present(input.confirmation_id) && present(input.confirmation_token);\nlet routeIntent = originalIntent;\nlet childIntent = originalIntent;\nif (originalIntent === 'HITL_RESUME') {\n  routeIntent = 'HITL_RESUME';\n  childIntent = (present(input.reservation_id) || present(input.reservationId)) ? 'CANCEL_RESERVATION' : 'PICKUP_PACKAGE';\n} else if ((originalIntent === 'PICKUP_PACKAGE' || originalIntent === 'CANCEL_RESERVATION') && hasConfirm) {\n  routeIntent = 'HITL_RESUME';\n  childIntent = originalIntent;\n}\nconst spec = ALLOW[routeIntent];\nif (!spec) return reject('WORKFLOW_UNSUPPORTED_INTENT', 'intent not in FASE 3A allowlist: ' + originalIntent);\nif (originalIntent === 'GET_BOLETO' || originalIntent === 'QUERY_BOLETO' || originalIntent === 'QUERY_BOLETO_SAFE') {\n  if (!present(input.boleto_id) && present(input.boletoId)) input.boleto_id = input.boletoId;\n  if (!present(input.resident_id) && present(input.residentId)) input.resident_id = input.residentId;\n}\nif (originalIntent === 'LIST_PACKAGES' || originalIntent === 'LIST_OCCURRENCES' || originalIntent === 'LIST_RESERVATIONS') {\n  if (!present(input.resident_id) && present(input.residentId)) input.resident_id = input.residentId;\n}\nif (originalIntent === 'LIST_RESERVATIONS') {\n  if (!present(input.area_id) && present(input.areaId)) input.area_id = input.areaId;\n}\nconst ext = String(input.external_message_id || requestId);\nlet idempotencyKey = '';\nif (spec.cls === 'WRITE') {\n  idempotencyKey = String(input.idempotency_key || ('n8n:' + clientId + ':' + originalIntent + ':' + ext + ':v1')).slice(0, 128);\n}\nif (spec.cls === 'SENSITIVE') idempotencyKey = '';\nconst child = Object.assign({}, input);\ndelete child.path; delete child.url; delete child.endpoint; delete child.method;\ndelete child._form_json_error;\nchild.intent = childIntent;\nchild.correlation_id = correlationId;\nchild.request_id = requestId;\nif (spec.cls === 'WRITE') child.idempotency_key = idempotencyKey;\nelse {\n  delete child.idempotency_key;\n  delete child.idempotencyKey;\n  delete child['Idempotency-Key'];\n}\nreturn [{ json: Object.assign({}, child, {\n  skip_http: false,\n  dispatched_aut: spec.aut,\n  target_workflow_id: spec.wfId,\n  target_workflow_name: spec.name,\n  router_intent: routeIntent,\n  classification: spec.cls,\n  idempotencyKey: idempotencyKey,\n  requestId: requestId,\n  correlationId: correlationId,\n  execution_id: executionId\n})}];"
+      },
+      "id": "aut-2f-001-validate",
+      "name": "Validate + Normalize",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "notes": "Allowlist only. Strip tenant. Encaminha via Execute Workflow.",
+      "position": [
+        800,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ !$json.skip_http }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "aut-2f-001-if",
+      "name": "Input Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const status = $json.httpStatus || 400;\nconst code = $json.error_code || 'WORKFLOW_INVALID_INPUT';\nreturn [{ json: {\n  aut: 'AUT-2F-001', ok: false, httpStatus: status, error_code: code,\n  request_id: $json.requestId || null, correlation_id: $json.correlationId || null, retry_action: 'no_retry',\n  retry_attempts: 0, dispatched_aut: null,\n  user_safe: { success: false, httpStatus: status, error_code: code },\n  sql_access: 0, financeiro: 0, master_api: 0\n}}];"
+      },
+      "id": "aut-2f-001-invalid",
+      "name": "Invalid Input Output",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "eq-AUT-001",
+                    "leftValue": "={{ $json.dispatched_aut }}",
+                    "rightValue": "AUT-001",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "AUT-001"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "eq-AUT-002",
+                    "leftValue": "={{ $json.dispatched_aut }}",
+                    "rightValue": "AUT-002",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "AUT-002"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "eq-AUT-003",
+                    "leftValue": "={{ $json.dispatched_aut }}",
+                    "rightValue": "AUT-003",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "AUT-003"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "eq-AUT-004",
+                    "leftValue": "={{ $json.dispatched_aut }}",
+                    "rightValue": "AUT-004",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "AUT-004"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "eq-AUT-005",
+                    "leftValue": "={{ $json.dispatched_aut }}",
+                    "rightValue": "AUT-005",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "AUT-005"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "eq-AUT-006",
+                    "leftValue": "={{ $json.dispatched_aut }}",
+                    "rightValue": "AUT-006",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "AUT-006"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "eq-AUT-007",
+                    "leftValue": "={{ $json.dispatched_aut }}",
+                    "rightValue": "AUT-007",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "AUT-007"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "eq-AUT-008",
+                    "leftValue": "={{ $json.dispatched_aut }}",
+                    "rightValue": "AUT-008",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "AUT-008"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "eq-AUT-009",
+                    "leftValue": "={{ $json.dispatched_aut }}",
+                    "rightValue": "AUT-009",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "AUT-009"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "eq-AUT-010",
+                    "leftValue": "={{ $json.dispatched_aut }}",
+                    "rightValue": "AUT-010",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "AUT-010"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "eq-AUT-2A-001",
+                    "leftValue": "={{ $json.dispatched_aut }}",
+                    "rightValue": "AUT-2A-001",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "AUT-2A-001"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "eq-AUT-2A-002",
+                    "leftValue": "={{ $json.dispatched_aut }}",
+                    "rightValue": "AUT-2A-002",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "AUT-2A-002"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "eq-AUT-2B-001",
+                    "leftValue": "={{ $json.dispatched_aut }}",
+                    "rightValue": "AUT-2B-001",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "AUT-2B-001"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "eq-AUT-2B-003",
+                    "leftValue": "={{ $json.dispatched_aut }}",
+                    "rightValue": "AUT-2B-003",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "AUT-2B-003"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "eq-AUT-2C-002",
+                    "leftValue": "={{ $json.dispatched_aut }}",
+                    "rightValue": "AUT-2C-002",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "AUT-2C-002"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "eq-AUT-2C-003",
+                    "leftValue": "={{ $json.dispatched_aut }}",
+                    "rightValue": "AUT-2C-003",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "AUT-2C-003"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "eq-AUT-2D-001",
+                    "leftValue": "={{ $json.dispatched_aut }}",
+                    "rightValue": "AUT-2D-001",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "AUT-2D-001"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "eq-AUT-2D-002",
+                    "leftValue": "={{ $json.dispatched_aut }}",
+                    "rightValue": "AUT-2D-002",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "AUT-2D-002"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "eq-AUT-2D-003",
+                    "leftValue": "={{ $json.dispatched_aut }}",
+                    "rightValue": "AUT-2D-003",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "AUT-2D-003"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "eq-AUT-3B-001",
+                    "leftValue": "={{ $json.dispatched_aut }}",
+                    "rightValue": "AUT-3B-001",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "AUT-3B-001"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "eq-AUT-3B-002",
+                    "leftValue": "={{ $json.dispatched_aut }}",
+                    "rightValue": "AUT-3B-002",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "AUT-3B-002"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "eq-AUT-3B-003",
+                    "leftValue": "={{ $json.dispatched_aut }}",
+                    "rightValue": "AUT-3B-003",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "AUT-3B-003"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "eq-AUT-3B-004",
+                    "leftValue": "={{ $json.dispatched_aut }}",
+                    "rightValue": "AUT-3B-004",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "AUT-3B-004"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "eq-AUT-3B-005",
+                    "leftValue": "={{ $json.dispatched_aut }}",
+                    "rightValue": "AUT-3B-005",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "AUT-3B-005"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "eq-AUT-2F-002",
+                    "leftValue": "={{ $json.dispatched_aut }}",
+                    "rightValue": "AUT-2F-002",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "AUT-2F-002"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "id": "aut-2f-001-switch",
+      "name": "Dispatch Switch",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "notes": "Allowlist only. Sem path arbitrário.",
+      "position": [
+        1400,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "aut-001",
+          "mode": "id",
+          "cachedResultName": "SENTINELAAUT — AUT-001 — Identify Resident"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "aut-2f-001-exec-aut-001",
+      "name": "Execute AUT-001",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1220,
+        80
+      ],
+      "notes": "Composição interna. Sem HTTP entre workflows locais. HMAC no filho."
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "aut-002",
+          "mode": "id",
+          "cachedResultName": "SENTINELAAUT — AUT-002 — Identify Unit"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "aut-2f-001-exec-aut-002",
+      "name": "Execute AUT-002",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1220,
+        150
+      ],
+      "notes": "Composição interna. Sem HTTP entre workflows locais. HMAC no filho."
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "aut-003",
+          "mode": "id",
+          "cachedResultName": "SENTINELAAUT — AUT-003 — Create Package"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "aut-2f-001-exec-aut-003",
+      "name": "Execute AUT-003",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1220,
+        220
+      ],
+      "notes": "Composição interna. Sem HTTP entre workflows locais. HMAC no filho."
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "aut-004",
+          "mode": "id",
+          "cachedResultName": "SENTINELAAUT — AUT-004 — Pickup Package"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "aut-2f-001-exec-aut-004",
+      "name": "Execute AUT-004",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1220,
+        290
+      ],
+      "notes": "Composição interna. Sem HTTP entre workflows locais. HMAC no filho."
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "aut-005",
+          "mode": "id",
+          "cachedResultName": "SENTINELAAUT — AUT-005 — Create Occurrence"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "aut-2f-001-exec-aut-005",
+      "name": "Execute AUT-005",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1220,
+        360
+      ],
+      "notes": "Composição interna. Sem HTTP entre workflows locais. HMAC no filho."
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "aut-006",
+          "mode": "id",
+          "cachedResultName": "SENTINELAAUT — AUT-006 — Update Occurrence"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "aut-2f-001-exec-aut-006",
+      "name": "Execute AUT-006",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1220,
+        430
+      ],
+      "notes": "Composição interna. Sem HTTP entre workflows locais. HMAC no filho."
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "aut-007",
+          "mode": "id",
+          "cachedResultName": "SENTINELAAUT — AUT-007 — Create Reservation"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "aut-2f-001-exec-aut-007",
+      "name": "Execute AUT-007",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1220,
+        500
+      ],
+      "notes": "Composição interna. Sem HTTP entre workflows locais. HMAC no filho."
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "aut-008",
+          "mode": "id",
+          "cachedResultName": "SENTINELAAUT — AUT-008 — Cancel Reservation"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "aut-2f-001-exec-aut-008",
+      "name": "Execute AUT-008",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1220,
+        570
+      ],
+      "notes": "Composição interna. Sem HTTP entre workflows locais. HMAC no filho."
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "aut-009",
+          "mode": "id",
+          "cachedResultName": "SENTINELAAUT — AUT-009 — Get Boleto"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "aut-2f-001-exec-aut-009",
+      "name": "Execute AUT-009",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1220,
+        640
+      ],
+      "notes": "Composição interna. Sem HTTP entre workflows locais. HMAC no filho."
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "aut-010",
+          "mode": "id",
+          "cachedResultName": "SENTINELAAUT — AUT-010 — List Events"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "aut-2f-001-exec-aut-010",
+      "name": "Execute AUT-010",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1220,
+        710
+      ],
+      "notes": "Composição interna. Sem HTTP entre workflows locais. HMAC no filho."
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "aut-2a-001",
+          "mode": "id",
+          "cachedResultName": "SENTINELAAUT — AUT-2A-001 — Register Package"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "aut-2f-001-exec-aut-2a-001",
+      "name": "Execute AUT-2A-001",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1220,
+        780
+      ],
+      "notes": "Composição interna. Sem HTTP entre workflows locais. HMAC no filho."
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "aut-2a-002",
+          "mode": "id",
+          "cachedResultName": "SENTINELAAUT — AUT-2A-002 — Pickup Package HITL"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "aut-2f-001-exec-aut-2a-002",
+      "name": "Execute AUT-2A-002",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1220,
+        850
+      ],
+      "notes": "Composição interna. Sem HTTP entre workflows locais. HMAC no filho."
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "aut-2b-001",
+          "mode": "id",
+          "cachedResultName": "SENTINELAAUT — AUT-2B-001 — Register Occurrence"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "aut-2f-001-exec-aut-2b-001",
+      "name": "Execute AUT-2B-001",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1220,
+        920
+      ],
+      "notes": "Composição interna. Sem HTTP entre workflows locais. HMAC no filho."
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "aut-2b-003",
+          "mode": "id",
+          "cachedResultName": "SENTINELAAUT — AUT-2B-003 — Register Occurrence From Context"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "aut-2f-001-exec-aut-2b-003",
+      "name": "Execute AUT-2B-003",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1220,
+        990
+      ],
+      "notes": "Composição interna. Sem HTTP entre workflows locais. HMAC no filho."
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "aut-2c-002",
+          "mode": "id",
+          "cachedResultName": "SENTINELAAUT — AUT-2C-002 — Create Reservation From Context"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "aut-2f-001-exec-aut-2c-002",
+      "name": "Execute AUT-2C-002",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1220,
+        1060
+      ],
+      "notes": "Composição interna. Sem HTTP entre workflows locais. HMAC no filho."
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "aut-2c-003",
+          "mode": "id",
+          "cachedResultName": "SENTINELAAUT — AUT-2C-003 — Cancel Reservation HITL"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "aut-2f-001-exec-aut-2c-003",
+      "name": "Execute AUT-2C-003",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1220,
+        1130
+      ],
+      "notes": "Composição interna. Sem HTTP entre workflows locais. HMAC no filho."
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "aut-2d-001",
+          "mode": "id",
+          "cachedResultName": "SENTINELAAUT — AUT-2D-001 — Query Boleto"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "aut-2f-001-exec-aut-2d-001",
+      "name": "Execute AUT-2D-001",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1220,
+        1200
+      ],
+      "notes": "Composição interna. Sem HTTP entre workflows locais. HMAC no filho."
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "aut-2d-002",
+          "mode": "id",
+          "cachedResultName": "SENTINELAAUT — AUT-2D-002 — Query Boleto By Resident Context"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "aut-2f-001-exec-aut-2d-002",
+      "name": "Execute AUT-2D-002",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1220,
+        1270
+      ],
+      "notes": "Composição interna. Sem HTTP entre workflows locais. HMAC no filho."
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "aut-2d-003",
+          "mode": "id",
+          "cachedResultName": "SENTINELAAUT — AUT-2D-003 — Query Boleto Safe"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "aut-2f-001-exec-aut-2d-003",
+      "name": "Execute AUT-2D-003",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1220,
+        1340
+      ],
+      "notes": "Composição interna. Sem HTTP entre workflows locais. HMAC no filho."
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "aut-3b-001",
+          "mode": "id",
+          "cachedResultName": "SENTINELAAUT — AUT-3B-001 — List Packages"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "aut-2f-001-exec-aut-3b-001",
+      "name": "Execute AUT-3B-001",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1220,
+        1410
+      ],
+      "notes": "Composição interna. Sem HTTP entre workflows locais. HMAC no filho."
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "aut-3b-002",
+          "mode": "id",
+          "cachedResultName": "SENTINELAAUT — AUT-3B-002 — List Occurrences"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "aut-2f-001-exec-aut-3b-002",
+      "name": "Execute AUT-3B-002",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1220,
+        1480
+      ],
+      "notes": "Composição interna. Sem HTTP entre workflows locais. HMAC no filho."
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "aut-3b-003",
+          "mode": "id",
+          "cachedResultName": "SENTINELAAUT — AUT-3B-003 — List Reservations"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "aut-2f-001-exec-aut-3b-003",
+      "name": "Execute AUT-3B-003",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1220,
+        1550
+      ],
+      "notes": "Composição interna. Sem HTTP entre workflows locais. HMAC no filho."
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "aut-3b-004",
+          "mode": "id",
+          "cachedResultName": "SENTINELAAUT — AUT-3B-004 — List Areas"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "aut-2f-001-exec-aut-3b-004",
+      "name": "Execute AUT-3B-004",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1220,
+        1620
+      ],
+      "notes": "Composição interna. Sem HTTP entre workflows locais. HMAC no filho."
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "aut-3b-005",
+          "mode": "id",
+          "cachedResultName": "SENTINELAAUT — AUT-3B-005 — Check Availability"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "aut-2f-001-exec-aut-3b-005",
+      "name": "Execute AUT-3B-005",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1220,
+        1690
+      ],
+      "notes": "Composição interna. Sem HTTP entre workflows locais. HMAC no filho."
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "aut-2f-002",
+          "mode": "id",
+          "cachedResultName": "SENTINELAAUT — AUT-2F-002 — HITL Resume"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "aut-2f-001-exec-aut-2f-002",
+      "name": "Execute AUT-2F-002",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1220,
+        1760
+      ],
+      "notes": "Composição interna. Sem HTTP entre workflows locais. HMAC no filho."
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev = $('Validate + Normalize').item.json;\nconst child = $json && typeof $json === 'object' ? $json : {};\nconst result = child.result && typeof child.result === 'object' ? child.result : child;\nconst httpStatus = typeof result.httpStatus === 'number' ? result.httpStatus : (typeof result.http_status === 'number' ? result.http_status : (result.ok === true || result.success === true ? 200 : 500));\nconst errorCode = result.error_code || result.errorCode || (result.error && result.error.code) || null;\nconst ok = result.ok === true || result.success === true || httpStatus === 200 || httpStatus === 201;\nconst requestId = result.request_id || result.requestId || prev.requestId || null;\nconst classification = String(prev.classification || 'READ');\nfunction retryAction(cls, status) {\n  if (cls === 'SENSITIVE') return 'no_retry';\n  if ([400,401,403,404,409].indexOf(status) >= 0) return 'no_retry';\n  if ([408,429,500,502,503,504].indexOf(status) >= 0) return cls === 'WRITE' ? 'retry_same_key' : 'retry';\n  return 'no_retry';\n}\nreturn [{ json: {\n  ok: !!ok,\n  httpStatus: httpStatus,\n  error_code: errorCode,\n  request_id: requestId,\n  correlation_id: prev.correlationId,\n  classification: classification,\n  retry_action: result.retry_action || retryAction(classification, httpStatus),\n  dispatched_aut: prev.dispatched_aut,\n  intent: prev.intent,\n  user_safe: result.user_safe || { success: !!ok, httpStatus: httpStatus, error_code: errorCode, correlation_id: prev.correlationId, request_id: requestId }\n}}];"
+      },
+      "id": "aut-2f-001-cls",
+      "name": "Classify Child",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "notes": "Não mascara 401/403/404/409. Sem HMAC neste hop.",
+      "position": [
+        1000,
+        860
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const cls = String($json.classification || $('Validate + Normalize').item.json.classification || 'READ');\nconst status = Number($json.httpStatus);\nconst transient = [408,429,500,502,503,504].indexOf(status) >= 0;\nconst business = [400,401,403,404,409].indexOf(status) >= 0;\nconst writeKey = String($('Validate + Normalize').item.json.idempotencyKey || '');\nconst do_retry = $json.ok === false && !business && cls !== 'SENSITIVE' && transient && (cls !== 'WRITE' || !!writeKey);\nreturn [{ json: Object.assign({}, $json, { do_retry: !!do_retry, classification: cls }) }];"
+      },
+      "id": "aut-2f-001-gate",
+      "name": "Gate Retry",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        860
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.do_retry }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "aut-2f-001-retry",
+      "name": "Retry?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1400,
+        860
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: $('Validate + Normalize').item.json }];"
+      },
+      "id": "aut-2f-001-restore",
+      "name": "Restore Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "notes": "Same Idempotency-Key for WRITE retry. SENSITIVE never.",
+      "position": [
+        200,
+        1030
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\r\n * n8n Code node — observabilidade técnica FASE 2E.\r\n * Não chama HTTP. Não grava Event Store. Não duplica domínio.\r\n * Secret / JWT / HMAC / cookies nunca entram no recorde.\r\n *\r\n * Espera o item anterior (Classify) em $json.\r\n * correlation_id = $execution.id (não rotaciona por node).\r\n */\r\n\r\nfunction present(v) {\r\n  return v !== undefined && v !== null && String(v).trim() !== '';\r\n}\r\n\r\nconst classified = $json && typeof $json === 'object' ? $json : {};\r\nconst executionId = String(($execution && $execution.id) || classified.execution_id || '').replace(/[^A-Za-z0-9_.:-]/g, '_').slice(0, 128);\r\nconst correlationId = present(classified.correlation_id)\r\n  ? String(classified.correlation_id).replace(/[^A-Za-z0-9_.:-]/g, '_').slice(0, 128)\r\n  : executionId;\r\nconst workflowId = String(($workflow && ($workflow.id || $workflow.name)) || classified.workflow_id || '') || null;\r\nconst workflowName = String(($workflow && $workflow.name) || classified.workflow_name || '') || null;\r\nconst started = Number(classified.obs_started_ms);\r\nconst apiStart = Number(classified.obs_api_started_ms);\r\nconst now = Date.now();\r\nconst durationMs = Number.isFinite(started) ? Math.max(0, now - started) : null;\r\nconst apiLatencyMs = Number.isFinite(apiStart) ? Math.max(0, now - apiStart) : null;\r\n\r\nconst userSafe = classified.user_safe && typeof classified.user_safe === 'object' ? classified.user_safe : {};\r\nconst httpStatus = typeof classified.httpStatus === 'number' ? classified.httpStatus : (typeof userSafe.httpStatus === 'number' ? userSafe.httpStatus : null);\r\nconst errorCode = classified.error_code || userSafe.error_code || null;\r\nconst requestId = classified.request_id || userSafe.request_id || null;\r\nconst operation = classified.operation || userSafe.operation || null;\r\nconst ok = classified.ok === true || userSafe.success === true;\r\n\r\nconst obs = {\r\n  source: 'n8n',\r\n  workflow_id: workflowId,\r\n  workflow_name: workflowName,\r\n  operation: operation,\r\n  execution_id: executionId || null,\r\n  correlation_id: correlationId || null,\r\n  request_id: requestId,\r\n  timestamp: new Date().toISOString(),\r\n  tenant_source: 'vault',\r\n  http_status: httpStatus,\r\n  status: ok ? 'success' : 'error',\r\n  error_code: errorCode,\r\n  retry_action: classified.retry_action || userSafe.retry_action || null,\r\n  duration_ms: durationMs,\r\n  api_latency_ms: apiLatencyMs,\r\n  event_store: 'api_v1_not_n8n',\r\n  sql_access: 0,\r\n  financeiro: 0\r\n};\r\n\r\nreturn [{\r\n  json: Object.assign({}, classified, {\r\n    observability: obs,\r\n    correlation_id: present(classified.correlation_id) ? classified.correlation_id : correlationId\r\n  })\r\n}];\r\n"
+      },
+      "id": "aut-2f-001-obs",
+      "name": "Observability",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "notes": "Metadados técnicos. Sem payload/secrets.",
+      "position": [
+        400,
+        1030
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "function safeValidateNormalize(field) {\n  try {\n    const j = $('Validate + Normalize').item.json;\n    if (j && j[field] != null && j[field] !== '') return j[field];\n  } catch (_) {\n    /* gateway reject path: Validate + Normalize not executed */\n  }\n  return null;\n}\nconst result = $json && typeof $json === 'object' ? $json : {};\nconst httpStatus =\n  typeof result.httpStatus === 'number'\n    ? result.httpStatus\n    : typeof result.user_safe?.httpStatus === 'number'\n      ? result.user_safe.httpStatus\n      : result.ok === false\n        ? 400\n        : 200;\nconst envelope = {\n  aut: 'AUT-2F-001',\n  workflow: 'SENTINELAAUT — AUT-2F-001 — Intent Router',\n  intent: result.intent ?? safeValidateNormalize('intent') ?? safeValidateNormalize('router_intent'),\n  dispatched_aut:\n    result.dispatched_aut ?? safeValidateNormalize('aut') ?? safeValidateNormalize('dispatched_aut'),\n  result,\n  sql_access: 0,\n  supabase_direct: 0,\n  master_api: 0,\n  financeiro: 0,\n  payment_gateway: 0\n};\nreturn [{ json: Object.assign({}, envelope, { http_status: httpStatus }) }];"
+      },
+      "id": "aut-2f-001-out",
+      "name": "Final Output",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        1030
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\r\n * n8n Code node — Validate Agent Gateway (agent-v1) — B16-B / B16-B-R1\r\n * Mirror: scripts/n8n-harness/agentGatewayV1.ts + agentGatewayNonceMode.ts\r\n *\r\n * Env:\r\n *   SENTINELA_AGENT_GATEWAY_ENABLED=1\r\n *   SENTINELA_AGENT_GATEWAY_SECRETS=[{key_id,secret,...}]\r\n *   SENTINELA_AGENT_GATEWAY_NONCE_STORE=unavailable|memory_test|persistent\r\n *   SENTINELA_AGENT_GATEWAY_ALLOW_MEMORY_TEST=1  (required with memory_test)\r\n *   SENTINELA_AGENT_GATEWAY_TEST_ENV=1           (required with memory_test)\r\n *   SENTINELA_AGENT_GATEWAY_HARNESS_RUNTIME=local_n8n|vitest  (third gate, B16-B-R2)\r\n *   SENTINELA_AGENT_GATEWAY_PRODUCTION=1         (blocks memory_test)\r\n *   B16-C persistent:\r\n *   SENTINELA_AGENT_GATEWAY_NONCE_CONSUME_URL=https://.../api/v1/agent-gateway/nonce/consume\r\n *   SENTINELA_AGENT_GATEWAY_INTERNAL_TOKEN=...\r\n *\r\n * Requires webhook options.rawBody: true\r\n */\r\n\r\nconst crypto = require('crypto');\r\n\r\nconst PROTOCOL = 'agent-v1';\r\nconst METHOD = 'POST';\r\nconst CANONICAL_PATH = '/webhook/sentinelaaut/aut-2f-001';\r\nconst HDR_KEY = 'x-agent-key-id';\r\nconst HDR_TS = 'x-agent-timestamp';\r\nconst HDR_NONCE = 'x-agent-nonce';\r\nconst HDR_SIG = 'x-agent-signature';\r\nconst FORGED_BODY_KEYS = [\r\n  '_agentGatewayPassed',\r\n  'organization_id',\r\n  'organizationId',\r\n  'org_id',\r\n  'orgId',\r\n  'condominium_id',\r\n  'condominiumId',\r\n  'tenant_id',\r\n  'tenantId'\r\n];\r\n\r\nfunction headerLookup(headers, name) {\r\n  const lower = name.toLowerCase();\r\n  const src = headers && typeof headers === 'object' ? headers : {};\r\n  for (const k of Object.keys(src)) {\r\n    if (String(k).toLowerCase() === lower) return String(src[k] || '').trim();\r\n  }\r\n  return '';\r\n}\r\n\r\nfunction sha256Hex(data) {\r\n  return crypto.createHash('sha256').update(data).digest('hex');\r\n}\r\n\r\nfunction safeEqualHex(a, b) {\r\n  try {\r\n    const ba = Buffer.from(String(a).toLowerCase(), 'utf8');\r\n    const bb = Buffer.from(String(b).toLowerCase(), 'utf8');\r\n    if (ba.length !== bb.length) return false;\r\n    return crypto.timingSafeEqual(ba, bb);\r\n  } catch {\r\n    return false;\r\n  }\r\n}\r\n\r\nfunction buildCanonical(timestamp, nonce, bodySha) {\r\n  return [PROTOCOL, timestamp, nonce, METHOD, CANONICAL_PATH, bodySha].join('\\n');\r\n}\r\n\r\nfunction signCanonical(secret, canonical) {\r\n  return crypto.createHmac('sha256', secret).update(canonical, 'utf8').digest('hex');\r\n}\r\n\r\nfunction verifySignature(secrets, canonical, provided) {\r\n  const p = String(provided || '').trim().toLowerCase();\r\n  if (!p || !/^[0-9a-f]+$/.test(p)) return false;\r\n  for (const s of secrets) {\r\n    if (!s) continue;\r\n    const exp = signCanonical(s, canonical);\r\n    if (safeEqualHex(exp, p)) return true;\r\n  }\r\n  return false;\r\n}\r\n\r\nfunction checkTimestamp(tsRaw, nowMs, windowSec) {\r\n  const raw = String(tsRaw || '').trim();\r\n  if (!raw || !/^\\d+$/.test(raw)) return false;\r\n  if (raw.length >= 13) return false;\r\n  const ts = Number(raw);\r\n  if (!Number.isFinite(ts) || ts <= 0) return false;\r\n  const nowSec = Math.floor(nowMs / 1000);\r\n  const skew = ts - nowSec;\r\n  if (skew < -windowSec || skew > windowSec) return false;\r\n  return true;\r\n}\r\n\r\nfunction parseSecrets(raw) {\r\n  if (!raw || !String(raw).trim()) return [];\r\n  let parsed;\r\n  try {\r\n    parsed = JSON.parse(String(raw));\r\n  } catch {\r\n    return [];\r\n  }\r\n  if (!Array.isArray(parsed)) return [];\r\n  const out = [];\r\n  for (const row of parsed) {\r\n    if (!row || typeof row !== 'object') continue;\r\n    const key_id = String(row.key_id || '').trim();\r\n    const secret = String(row.secret || '').trim();\r\n    if (!key_id || !secret) continue;\r\n    out.push({\r\n      key_id,\r\n      secret,\r\n      secret_previous:\r\n        typeof row.secret_previous === 'string' && row.secret_previous.trim()\r\n          ? row.secret_previous.trim()\r\n          : undefined,\r\n      status: row.status === 'revoked' ? 'revoked' : row.status === 'active' ? 'active' : undefined\r\n    });\r\n  }\r\n  return out;\r\n}\r\n\r\nfunction isProductionRuntime(signals) {\r\n  if (String(signals.productionLock || '').trim() === '1') return true;\r\n  if (String(signals.nodeEnv || '').trim().toLowerCase() === 'production') return true;\r\n  if (String(signals.vercelEnv || '').trim().toLowerCase() === 'production') return true;\r\n  return false;\r\n}\r\n\r\nfunction resolveHarnessRuntime(signals) {\r\n  if (isProductionRuntime(signals)) return { ok: false };\r\n  const vitestOn = String(signals.vitest || '').trim().toLowerCase() === 'true';\r\n  const hr = String(signals.harnessRuntime || '').trim().toLowerCase();\r\n  if (vitestOn) return { ok: true };\r\n  if (hr === 'vitest' || hr === 'local_n8n') return { ok: true };\r\n  return { ok: false };\r\n}\r\n\r\nfunction hasPersistentNonceConfig(env) {\r\n  const url = String(env.nonceConsumeUrl || '').trim();\r\n  const tok = String(env.internalToken || '').trim();\r\n  return Boolean(url && tok);\r\n}\r\n\r\nfunction resolveNonceMode(env) {\r\n  const mode = String(env.nonceStore || 'unavailable').trim().toLowerCase();\r\n  if (!mode || mode === 'unavailable') return { ok: false };\r\n  if (mode === 'persistent') {\r\n    if (!hasPersistentNonceConfig(env)) return { ok: false };\r\n    return { ok: true, mode: 'persistent' };\r\n  }\r\n  if (mode === 'memory_test') {\r\n    const allow = String(env.allowMemoryTest || '').trim() === '1';\r\n    const testEnv = String(env.testEnv || '').trim() === '1';\r\n    if (!allow || !testEnv) return { ok: false };\r\n    if (!resolveHarnessRuntime(env).ok) return { ok: false };\r\n    return { ok: true, mode: 'memory_test' };\r\n  }\r\n  return { ok: false };\r\n}\r\n\r\nfunction fail(httpStatus, publicCode) {\r\n  return [\r\n    {\r\n      json: {\r\n        skip_http: true,\r\n        error_code: publicCode,\r\n        httpStatus,\r\n        agent_gateway_blocked: true,\r\n        user_safe: { success: false, httpStatus, error_code: publicCode }\r\n      }\r\n    }\r\n  ];\r\n}\r\n\r\nfunction extractRawBody(item) {\r\n  if (typeof item.rawBody === 'string') return item.rawBody;\r\n  if (typeof item.body === 'string') return item.body;\r\n  const binFromItem =\r\n    item.binary && item.binary.data && item.binary.data.data ? item.binary : null;\r\n  const binRoot =\r\n    typeof $binary !== 'undefined' && $binary && $binary.data && $binary.data.data ? $binary : null;\r\n  const bin = binFromItem || binRoot;\r\n  if (bin && bin.data && bin.data.data) {\r\n    return Buffer.from(bin.data.data, 'base64').toString('utf8');\r\n  }\r\n  return '';\r\n}\r\n\r\nconst KEY_ID_RE = /^[A-Za-z0-9_.:-]{3,64}$/;\r\nconst NONCE_RE = /^[A-Za-z0-9_.:-]{16,128}$/;\r\nconst HDR_INTERNAL = 'x-sentinela-agent-gateway-internal-token';\r\nconst PUBLIC_FORBIDDEN = 'AGENT_GATEWAY_FORBIDDEN';\r\n\r\nfunction mapNonceConsumeHttpStatus(statusCode) {\r\n  const s = Number(statusCode) || 0;\r\n  if (s === 200) return 'ok';\r\n  if (s === 409) return 'replay';\r\n  if (s === 401) return 'unauthorized';\r\n  if (s === 403) return 'forbidden';\r\n  if (s === 400) return 'bad_request';\r\n  return 'unavailable';\r\n}\r\n\r\nfunction resolveHttpRequestFn() {\r\n  if (typeof helpers !== 'undefined' && helpers && typeof helpers.httpRequest === 'function') {\r\n    return helpers.httpRequest.bind(helpers);\r\n  }\r\n  if (typeof $helpers !== 'undefined' && $helpers && typeof $helpers.httpRequest === 'function') {\r\n    return $helpers.httpRequest.bind($helpers);\r\n  }\r\n  return undefined;\r\n}\r\n\r\nasync function consumePersistentNonceViaApi(keyId, nonce, nowMs, env, httpRequest) {\r\n  const url = String(env.nonceConsumeUrl || '').trim();\r\n  const tok = String(env.internalToken || '').trim();\r\n  if (!url || !tok) return 'unavailable';\r\n  try {\r\n    let statusCode;\r\n    if (typeof httpRequest === 'function') {\r\n      const resp = await httpRequest({\r\n        method: 'POST',\r\n        url,\r\n        headers: {\r\n          [HDR_INTERNAL]: tok,\r\n          'Content-Type': 'application/json'\r\n        },\r\n        body: { key_id: keyId, nonce, consumed_ms: nowMs },\r\n        json: true,\r\n        returnFullResponse: true,\r\n        ignoreHttpStatusErrors: true\r\n      });\r\n      statusCode =\r\n        resp.statusCode ||\r\n        resp.status ||\r\n        (resp.response && resp.response.statusCode) ||\r\n        0;\r\n      if (!statusCode && resp.body && typeof resp.body === 'object' && resp.body.success === true) {\r\n        statusCode = 200;\r\n      }\r\n    } else if (typeof fetch === 'function') {\r\n      const resp = await fetch(url, {\r\n        method: 'POST',\r\n        headers: {\r\n          [HDR_INTERNAL]: tok,\r\n          'Content-Type': 'application/json'\r\n        },\r\n        body: JSON.stringify({ key_id: keyId, nonce, consumed_ms: nowMs })\r\n      });\r\n      statusCode = resp.status;\r\n    } else {\r\n      return 'unavailable';\r\n    }\r\n    return mapNonceConsumeHttpStatus(statusCode);\r\n  } catch {\r\n    return 'unavailable';\r\n  }\r\n}\r\n\r\nreturn (async () => {\r\n  const enabled = String($env.SENTINELA_AGENT_GATEWAY_ENABLED || '').trim() === '1';\r\n  if (!enabled) {\r\n    return fail(503, 'AGENT_GATEWAY_UNAVAILABLE');\r\n  }\r\n\r\n  const windowRaw = String($env.SENTINELA_AGENT_GATEWAY_TIMESTAMP_WINDOW_SECONDS || '').trim();\r\n  let windowSec = windowRaw ? Number(windowRaw) : 300;\r\n  if (!Number.isFinite(windowSec) || windowSec < 30 || windowSec > 3600) windowSec = 300;\r\n\r\n  const headers = ($json.headers && typeof $json.headers === 'object' ? $json.headers : {}) || {};\r\n  let webhookItem = $json;\r\n  try {\r\n    const wh = $('Webhook Trigger').first();\r\n    if (wh && wh.json) {\r\n      webhookItem = Object.assign({}, wh.json, wh.binary ? { binary: wh.binary } : {});\r\n    }\r\n  } catch (_) {\r\n    /* manual / form ingress */\r\n  }\r\n  const rawBody = extractRawBody(webhookItem);\r\n  if (!rawBody) {\r\n    return fail(401, 'AGENT_AUTH_FAILED');\r\n  }\r\n\r\n  const keyId = headerLookup(headers, HDR_KEY);\r\n  const timestamp = headerLookup(headers, HDR_TS);\r\n  const nonce = headerLookup(headers, HDR_NONCE);\r\n  const signature = headerLookup(headers, HDR_SIG);\r\n\r\n  if (!keyId || !KEY_ID_RE.test(keyId)) return fail(401, 'AGENT_AUTH_FAILED');\r\n  if (!nonce || !NONCE_RE.test(nonce)) return fail(401, 'AGENT_AUTH_FAILED');\r\n  if (!signature) return fail(401, 'AGENT_AUTH_FAILED');\r\n  if (!checkTimestamp(timestamp, Date.now(), windowSec)) return fail(401, 'AGENT_AUTH_FAILED');\r\n\r\n  const secrets = parseSecrets($env.SENTINELA_AGENT_GATEWAY_SECRETS);\r\n  const cred = secrets.find((s) => s.key_id === keyId);\r\n  if (!cred || cred.status === 'revoked') return fail(401, 'AGENT_AUTH_FAILED');\r\n\r\n  const bodySha = sha256Hex(rawBody);\r\n  const canonical = buildCanonical(timestamp, nonce, bodySha);\r\n  const secList = [cred.secret, cred.secret_previous].filter(Boolean);\r\n  if (!verifySignature(secList, canonical, signature)) return fail(401, 'AGENT_AUTH_FAILED');\r\n\r\n  let parsed;\r\n  try {\r\n    parsed = JSON.parse(rawBody);\r\n    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {\r\n      return fail(401, 'AGENT_AUTH_FAILED');\r\n    }\r\n  } catch {\r\n    return fail(401, 'AGENT_AUTH_FAILED');\r\n  }\r\n\r\n  for (const k of FORGED_BODY_KEYS) delete parsed[k];\r\n\r\n  const modeRes = resolveNonceMode({\r\n    nonceStore: $env.SENTINELA_AGENT_GATEWAY_NONCE_STORE,\r\n    allowMemoryTest: $env.SENTINELA_AGENT_GATEWAY_ALLOW_MEMORY_TEST,\r\n    testEnv: $env.SENTINELA_AGENT_GATEWAY_TEST_ENV,\r\n    harnessRuntime: $env.SENTINELA_AGENT_GATEWAY_HARNESS_RUNTIME,\r\n    productionLock: $env.SENTINELA_AGENT_GATEWAY_PRODUCTION,\r\n    nodeEnv: $env.NODE_ENV,\r\n    vercelEnv: $env.VERCEL_ENV,\r\n    vitest: $env.VITEST,\r\n    nonceConsumeUrl: $env.SENTINELA_AGENT_GATEWAY_NONCE_CONSUME_URL,\r\n    internalToken: $env.SENTINELA_AGENT_GATEWAY_INTERNAL_TOKEN\r\n  });\r\n  if (!modeRes.ok) {\r\n    return fail(503, 'AGENT_GATEWAY_UNAVAILABLE');\r\n  }\r\n\r\n  if (modeRes.mode === 'memory_test') {\r\n    const g = $getWorkflowStaticData('global');\r\n    if (!g._agentNonces) g._agentNonces = {};\r\n    const nk = keyId + ':' + nonce;\r\n    if (g._agentNonces[nk]) return fail(401, 'AGENT_AUTH_FAILED');\r\n    g._agentNonces[nk] = Date.now();\r\n  }\r\n\r\n  if (modeRes.mode === 'persistent') {\r\n    const httpFn = resolveHttpRequestFn();\r\n    const consumed = await consumePersistentNonceViaApi(\r\n      keyId,\r\n      nonce,\r\n      Date.now(),\r\n      {\r\n        nonceConsumeUrl: $env.SENTINELA_AGENT_GATEWAY_NONCE_CONSUME_URL,\r\n        internalToken: $env.SENTINELA_AGENT_GATEWAY_INTERNAL_TOKEN\r\n      },\r\n      httpFn\r\n    );\r\n    if (consumed === 'replay') return fail(401, 'AGENT_AUTH_FAILED');\r\n    if (consumed === 'forbidden') return fail(403, PUBLIC_FORBIDDEN);\r\n    if (consumed === 'unauthorized') return fail(503, 'AGENT_GATEWAY_UNAVAILABLE');\r\n    if (consumed === 'bad_request') return fail(503, 'AGENT_GATEWAY_UNAVAILABLE');\r\n    if (consumed !== 'ok') return fail(503, 'AGENT_GATEWAY_UNAVAILABLE');\r\n  }\r\n\r\n  const out = Object.assign({}, $json);\r\n  out.body = parsed;\r\n  out._agentGatewayPassed = true;\r\n  out._ingress = 'webhook';\r\n  delete out.rawBody;\r\n  return [{ json: out }];\r\n})();\r\n"
+      },
+      "id": "aut-2f-001-agent-gateway",
+      "name": "Validate Agent Gateway",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "notes": "B16-B agent-v1 HMAC on raw body. Fail-closed without persistent nonce store (B16-C). No secrets in output.",
+      "position": [
+        600,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json._agentGatewayPassed === true }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "aut-2f-001-agent-approved",
+      "name": "Agent Gateway Approved?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        700,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseCode": "={{ $json.http_status || 200 }}"
+        }
+      },
+      "id": "aut-2f-001-respond-webhook",
+      "name": "Respond Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        800,
+        1030
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Validate + Normalize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Validate Agent Gateway",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Form Trigger": {
+      "main": [
+        [
+          {
+            "node": "Validate + Normalize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate + Normalize": {
+      "main": [
+        [
+          {
+            "node": "Input Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Input Valid?": {
+      "main": [
+        [
+          {
+            "node": "Dispatch Switch",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Invalid Input Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dispatch Switch": {
+      "main": [
+        [
+          {
+            "node": "Execute AUT-001",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute AUT-002",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute AUT-003",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute AUT-004",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute AUT-005",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute AUT-006",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute AUT-007",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute AUT-008",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute AUT-009",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute AUT-010",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute AUT-2A-001",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute AUT-2A-002",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute AUT-2B-001",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute AUT-2B-003",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute AUT-2C-002",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute AUT-2C-003",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute AUT-2D-001",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute AUT-2D-002",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute AUT-2D-003",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute AUT-3B-001",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute AUT-3B-002",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute AUT-3B-003",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute AUT-3B-004",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute AUT-3B-005",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute AUT-2F-002",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Invalid Input Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classify Child": {
+      "main": [
+        [
+          {
+            "node": "Gate Retry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gate Retry": {
+      "main": [
+        [
+          {
+            "node": "Retry?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retry?": {
+      "main": [
+        [
+          {
+            "node": "Restore Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Observability",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Restore Request": {
+      "main": [
+        [
+          {
+            "node": "Dispatch Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Invalid Input Output": {
+      "main": [
+        [
+          {
+            "node": "Observability",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Observability": {
+      "main": [
+        [
+          {
+            "node": "Final Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute AUT-001": {
+      "main": [
+        [
+          {
+            "node": "Classify Child",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute AUT-002": {
+      "main": [
+        [
+          {
+            "node": "Classify Child",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute AUT-003": {
+      "main": [
+        [
+          {
+            "node": "Classify Child",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute AUT-004": {
+      "main": [
+        [
+          {
+            "node": "Classify Child",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute AUT-005": {
+      "main": [
+        [
+          {
+            "node": "Classify Child",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute AUT-006": {
+      "main": [
+        [
+          {
+            "node": "Classify Child",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute AUT-007": {
+      "main": [
+        [
+          {
+            "node": "Classify Child",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute AUT-008": {
+      "main": [
+        [
+          {
+            "node": "Classify Child",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute AUT-009": {
+      "main": [
+        [
+          {
+            "node": "Classify Child",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute AUT-010": {
+      "main": [
+        [
+          {
+            "node": "Classify Child",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute AUT-2A-001": {
+      "main": [
+        [
+          {
+            "node": "Classify Child",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute AUT-2A-002": {
+      "main": [
+        [
+          {
+            "node": "Classify Child",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute AUT-2B-001": {
+      "main": [
+        [
+          {
+            "node": "Classify Child",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute AUT-2B-003": {
+      "main": [
+        [
+          {
+            "node": "Classify Child",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute AUT-2C-002": {
+      "main": [
+        [
+          {
+            "node": "Classify Child",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute AUT-2C-003": {
+      "main": [
+        [
+          {
+            "node": "Classify Child",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute AUT-2D-001": {
+      "main": [
+        [
+          {
+            "node": "Classify Child",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute AUT-2D-002": {
+      "main": [
+        [
+          {
+            "node": "Classify Child",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute AUT-2D-003": {
+      "main": [
+        [
+          {
+            "node": "Classify Child",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute AUT-3B-001": {
+      "main": [
+        [
+          {
+            "node": "Classify Child",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute AUT-3B-002": {
+      "main": [
+        [
+          {
+            "node": "Classify Child",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute AUT-3B-003": {
+      "main": [
+        [
+          {
+            "node": "Classify Child",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute AUT-3B-004": {
+      "main": [
+        [
+          {
+            "node": "Classify Child",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute AUT-3B-005": {
+      "main": [
+        [
+          {
+            "node": "Classify Child",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute AUT-2F-002": {
+      "main": [
+        [
+          {
+            "node": "Classify Child",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Agent Gateway": {
+      "main": [
+        [
+          {
+            "node": "Agent Gateway Approved?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent Gateway Approved?": {
+      "main": [
+        [
+          {
+            "node": "Validate + Normalize",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Invalid Input Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Final Output": {
+      "main": [
+        [
+          {
+            "node": "Respond Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "aut-2f-003"
+  },
+  "meta": {
+    "sentinela_fase": "N8N-FASE-3A",
+    "aut": "AUT-2F-001",
+    "intent": "INTENT_ROUTER",
+    "composed_of": [
+      "AUT-001",
+      "AUT-002",
+      "AUT-003",
+      "AUT-004",
+      "AUT-005",
+      "AUT-006",
+      "AUT-007",
+      "AUT-008",
+      "AUT-009",
+      "AUT-010",
+      "AUT-2A-001",
+      "AUT-2A-002",
+      "AUT-2B-001",
+      "AUT-2B-003",
+      "AUT-2C-002",
+      "AUT-2C-003",
+      "AUT-2D-001",
+      "AUT-2D-002",
+      "AUT-2D-003",
+      "AUT-3B-001",
+      "AUT-3B-002",
+      "AUT-3B-003",
+      "AUT-3B-004",
+      "AUT-3B-005",
+      "AUT-2F-002"
+    ],
+    "execute_workflow": 1,
+    "sql": 0,
+    "financeiro": 0,
+    "master": 0
+  },
+  "tags": [
+    {
+      "name": "sentinelaaut"
+    },
+    {
+      "name": "fase-3a"
+    },
+    {
+      "name": "fase-2f"
+    },
+    {
+      "name": "AUT-2F-001"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+# B7 — Real API pilot + PG nonce sidecar on clone isolated network (NOT live).
+services:
+  api-pilot-dp02b3:
+    build:
+      context: ../..
+      dockerfile: docker/dp02b3-isolated/Dockerfile.api-pilot
+    image: sentinelaaut-api-pilot-dp02b3:local
+    container_name: sentinelaaut-api-pilot-dp02b3
+    restart: "no"
+    environment:
+      SENTINELA_PILOT_ISOLATED_DOCKER: "1"
+      SENTINELA_PILOT_HOST: "0.0.0.0"
+      SENTINELA_PILOT_PORT: "3099"
+    networks:
+      - sentinelaaut-n8n-dp02b3-isolated
+
+  agent-nonce-sidecar-dp02b3:
+    extends:
+      file: compose-b4-e2e-pg.yml
+      service: agent-nonce-sidecar-dp02b3
+
+networks:
+  sentinelaaut-n8n-dp02b3-isolated:
+    external: true

@@ -1,0 +1,12 @@
+# D-P0-2B-4B-A3 — Linux-built nonce sidecar (clone isolated).
+FROM node:22-bookworm-slim
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --ignore-scripts
+COPY scripts/n8n-harness/pilot.vite.config.ts scripts/n8n-harness/pilot.vite.config.ts
+COPY scripts/n8n-harness/pilot-env-empty scripts/n8n-harness/pilot-env-empty
+COPY scripts/n8n-harness/agent-gateway-nonce-sidecar.ts scripts/n8n-harness/agent-gateway-nonce-sidecar.ts
+COPY scripts/n8n-harness/run-agent-gateway-nonce-sidecar.mjs scripts/n8n-harness/run-agent-gateway-nonce-sidecar.mjs
+COPY api api
+COPY types.ts tsconfig.json vitest.config.ts ./
+CMD ["node", "scripts/n8n-harness/run-agent-gateway-nonce-sidecar.mjs"]

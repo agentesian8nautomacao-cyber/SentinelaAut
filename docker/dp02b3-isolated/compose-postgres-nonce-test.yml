@@ -1,0 +1,24 @@
+# D-P0-2B-4B-A4 — Disposable PostgreSQL for agent_gateway_nonces (NOT Supabase prod).
+# Bind loopback only. Synthetic credentials — discard after tests.
+
+services:
+  pg-nonce-test-a4:
+    image: postgres:16-alpine
+    container_name: sentinelaaut-pg-nonce-test-a4
+    restart: "no"
+    environment:
+      POSTGRES_USER: nonce_test
+      POSTGRES_PASSWORD: nonce_test_local_discard
+      POSTGRES_DB: nonce_test
+    ports:
+      - "127.0.0.1:55440:5432"
+    volumes:
+      - sentinelaaut-pg-nonce-test-a4-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nonce_test -d nonce_test"]
+      interval: 3s
+      timeout: 5s
+      retries: 15
+
+volumes:
+  sentinelaaut-pg-nonce-test-a4-data:

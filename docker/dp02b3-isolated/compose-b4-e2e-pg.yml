@@ -1,0 +1,12 @@
+# B4 E2E — PG nonce sidecar on clone isolated network (NOT live).
+services:
+  agent-nonce-sidecar-dp02b3:
+    extends:
+      file: compose-nonce-sidecar.yml
+      service: agent-nonce-sidecar-dp02b3
+    environment:
+      SENTINELA_AGENT_GATEWAY_NONCE_SQLITE_PATH: ""
+      SENTINELA_AGENT_GATEWAY_NONCE_SIDECAR_ALLOW_DATABASE_URL: "1"
+      SENTINELA_AGENT_GATEWAY_ALLOWED_KEY_IDS: b4-e2e-clone-key-id
+      DATABASE_URL: postgresql://nonce_test:nonce_test_local_discard@sentinelaaut-pg-nonce-test-a4:5432/nonce_test?sslmode=disable
+    depends_on: []

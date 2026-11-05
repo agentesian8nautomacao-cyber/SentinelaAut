@@ -12,6 +12,8 @@ dist
 dist-ssr
 
 # Environment variables - NUNCA commitar arquivos .env!
+docker/dp02b3-isolated/nonce-sidecar.env
+docker/dp02b3-isolated/n8n-clone-b4.env
 .env
 .env.local
 .env.localnet
@@ -33,7 +35,15 @@ dist-ssr
 .vercel
 .env*.local
 
+# n8n FASE 1 — evidência de runtime local (payloads / tokens de confirmação)
+n8n/runtime/n8n-imported-ids.json
+n8n/runtime/n8n-runtime-runs.json
+n8n/runtime/n8n-fase1-*.json
+
 # Database dumps / backups — NÃO commitar (Gate 2 / pré-M1)
 *.dump
 *.dump.tmp
 *.sql.gz
+
+.vercel
+.env*.local

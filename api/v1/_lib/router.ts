@@ -24,7 +24,11 @@ const ROUTES: Record<string, () => Promise<{ default: RouteHandler }>> = {
   '/operations/packages': () => import('./handlers/operations/packages/index'),
   '/operations/packages/pickup': () => import('./handlers/operations/packages/pickup'),
   '/operations/reservations': () => import('./handlers/operations/reservations/index'),
-  '/operations/reservations/cancel': () => import('./handlers/operations/reservations/cancel')
+  '/operations/reservations/cancel': () => import('./handlers/operations/reservations/cancel'),
+  '/operations/reservations/availability': () =>
+    import('./handlers/operations/reservations/availability'),
+  '/operations/areas': () => import('./handlers/operations/areas/index'),
+  '/agent-gateway/nonce/consume': () => import('./handlers/agent-gateway/nonce-consume')
 };
 
 export async function routeV1Request(request: Request): Promise<Response> {
